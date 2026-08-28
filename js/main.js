@@ -36,7 +36,8 @@ const state = {
   dpi: 350,
   margin: { top: 5, bottom: 5, left: 5, right: 5 },
   gap:    { h: 2, v: 2 },
-  rotation: 0,  // cumulative rotation in degrees (mod 360)
+  zoom: 1,        // per-photo zoom multiplier; does NOT affect layout
+  rotation: 0,    // cumulative rotation in degrees (mod 360)
 };
 
 const cropperWrapper = createCropperWrapper(dom.cropImage);
@@ -92,6 +93,7 @@ function refresh() {
         margin: state.margin,
         gap: state.gap,
         rotation: state.rotation,
+        zoom: state.zoom,
       },
       PHOTO_SIZES, PAPER_SIZES,
       state.status === 'READY' ? state.croppedCanvas : null
@@ -234,6 +236,7 @@ dom.btnExport.addEventListener('click', async () => {
         margin: state.margin,
         gap: state.gap,
         rotation: state.rotation,
+        zoom: state.zoom,
         format,
       },
       PHOTO_SIZES, PAPER_SIZES

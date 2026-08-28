@@ -64,23 +64,28 @@ export function renderPreview(canvas, params, photoMap, paperMap, croppedCanvas)
   // Compute layout in mm → convert to px.
   const layout = calculateLayout(photo, paper, params.margin, params.gap);
 
+  // Per-photo zoom — does NOT affect layout positions, only draw size.
+  const zoom = params.zoom || 1;
+  const drawW = photo.w * zoom;
+  const drawH = photo.h * zoom;
+
   if (croppedCanvas) {
     for (const pos of layout.positions) {
       ctx.drawImage(
         croppedCanvas,
         pos.x * scale,
         pos.y * scale,
-        photo.w * scale,
-        photo.h * scale
+        drawW * scale,
+        drawH * scale
       );
     }
-    // Show crop marks in preview so user can see final layout.
-    drawCropMarks(ctx, layout, photo, scale);
+    // Crop marks track the actual (zoomed) photo edge.
+    drawCropMarks(ctx, layout, photo, scale, zoom);
   } else {
     // Fallback placeholder if no cropped canvas yet.
     ctx.fillStyle = '#e0e0e0';
     for (const pos of layout.positions) {
-      ctx.fillRect(pos.x * scale, pos.y * scale, photo.w * scale, photo.h * scale);
+      ctx.fillRect(pos.x * scale, pos.y * scale, drawW * scale, drawH * scale);
     }
   }
 

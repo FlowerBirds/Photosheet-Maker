@@ -36,3 +36,9 @@ export const ACCEPTED_TYPES  = ['image/jpeg', 'image/png', 'image/webp'];
 // overlap with the photo content.
 export const CROP_MARK_GAP   = 1; // mm gap between photo edge and mark
 export const CROP_MARK_LENGTH = 5; // mm line length
+
+// Per-photo zoom (does NOT affect layout — only display & export size).
+export const DEFAULT_ZOOM = 1;   // 1 = actual size
+export const ZOOM_MIN     = 0;
+export const ZOOM_MAX     = 2;
+export const ZOOM_STEP    = 0.01;

@@ -10,6 +10,7 @@ import { drawCropMarks } from './crop-marks.js';
  *   margin: {top:number,bottom:number,left:number,right:number},
  *   gap:    {h:number, v:number},
  *   rotation?: number,
+ *   zoom?: number,
  *   format: 'jpeg'|'png',
  * }} params
  * @param {Record<string,{w:number,h:number}>} photoMap
@@ -17,7 +18,10 @@ import { drawCropMarks } from './crop-marks.js';
  * @returns {Promise<void>}
  */
 export async function exportImage(params, photoMap, paperMap) {
-  const { croppedCanvas, photoSize, paperSize, dpi, margin, gap, rotation = 0, format } = params;
+  const {
+    croppedCanvas, photoSize, paperSize, dpi, margin, gap,
+    rotation = 0, zoom = 1, format,
+  } = params;
   const photoBase = photoMap[photoSize];
   const paper = paperMap[paperSize];
   // Account for rotation: a 90°/270° rotation swaps width and height.
@@ -39,19 +43,24 @@ export async function exportImage(params, photoMap, paperMap) {
 
   // Draw cropped photos at each layout position.
   const layout = calculateLayout(photo, paper, margin, gap);
+  // Per-photo zoom — affects draw size only, not layout positions.
+  // Overflow beyond paper edges is naturally clipped by the canvas.
+  const drawW = photo.w * zoom;
+  const drawH = photo.h * zoom;
+
   if (croppedCanvas && layout.count > 0) {
     for (const pos of layout.positions) {
       ctx.drawImage(
         croppedCanvas,
         Math.round(pos.x * mmToPx),
         Math.round(pos.y * mmToPx),
-        Math.round(photo.w * mmToPx),
-        Math.round(photo.h * mmToPx)
+        Math.round(drawW * mmToPx),
+        Math.round(drawH * mmToPx)
       );
     }
 
-    // Crop marks: 4 short lines at each photo corner (inset by 3mm).
-    drawCropMarks(ctx, layout, photo, mmToPx);
+    // Crop marks track the actual (zoomed) photo edge.
+    drawCropMarks(ctx, layout, photo, mmToPx, zoom);
   }
 
   // Encode and trigger download.

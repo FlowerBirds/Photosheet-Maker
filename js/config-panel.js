@@ -1,6 +1,6 @@
 import {
   PHOTO_SIZES, PAPER_SIZES, DPI_OPTIONS,
-  DEFAULT_MARGIN, DEFAULT_GAP,
+  DEFAULT_MARGIN, DEFAULT_GAP, DEFAULT_ZOOM,
 } from './constants.js';
 
 /**
@@ -50,6 +50,7 @@ function bindSlider(input, mirror) {
  *   marginRight: HTMLInputElement, marginRightVal: HTMLElement,
  *   gapH: HTMLInputElement, gapHVal: HTMLElement,
  *   gapV: HTMLInputElement, gapVVal: HTMLElement,
+ *   zoom: HTMLInputElement, zoomVal: HTMLElement,
  * }} els
  * @param {(patch: object) => void} onChange   - called with a partial state patch
  */
@@ -75,6 +76,7 @@ export function initConfigPanel(els, onChange) {
   els.marginRight.value  = DEFAULT_MARGIN.right;
   els.gapH.value         = DEFAULT_GAP.h;
   els.gapV.value         = DEFAULT_GAP.v;
+  els.zoom.value         = String(DEFAULT_ZOOM);
 
   // Wire each slider to its mirror span. `bindSlider` runs the initial
   // sync itself, so the displayed value reflects the defaults immediately.
@@ -84,6 +86,16 @@ export function initConfigPanel(els, onChange) {
   bindSlider(els.marginRight,  els.marginRightVal);
   bindSlider(els.gapH,         els.gapHVal);
   bindSlider(els.gapV,         els.gapVVal);
+
+  // Zoom slider: mirror shows "1.00×" format with two decimals.
+  if (els.zoom && els.zoomVal) {
+    const syncZoom = () => {
+      els.zoomVal.textContent = `${Number(els.zoom.value).toFixed(2)}×`;
+    };
+    els.zoom.addEventListener('input',  syncZoom);
+    els.zoom.addEventListener('change', syncZoom);
+    syncZoom();
+  }
 
   // Debounced change handler for slider inputs.
   let timer = null;
@@ -115,4 +127,9 @@ export function initConfigPanel(els, onChange) {
   });
   els.gapH.addEventListener('input', () => debounced(gapPatch()));
   els.gapV.addEventListener('input', () => debounced(gapPatch()));
+
+  // Zoom: dispatch immediately (no debounce) for smooth preview feedback.
+  if (els.zoom) {
+    els.zoom.addEventListener('input', () => onChange({ zoom: Number(els.zoom.value) }));
+  }
 }

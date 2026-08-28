@@ -5,22 +5,28 @@ import { CROP_MARK_GAP, CROP_MARK_LENGTH } from './constants.js';
  * in the layout. The marks sit OUTSIDE the photo, with a 1mm gap, so
  * they don't overlap the photo content.
  *
+ * The marks track the actual (possibly zoomed) photo edge, not the
+ * nominal layout slot — so when zoom > 1, marks move outward.
+ *
  * @param {CanvasRenderingContext2D} ctx
  * @param {{positions:Array<{x:number,y:number}>}} layout  - mm coordinates
- * @param {{w:number, h:number}} photo                    - photo size in mm
+ * @param {{w:number, h:number}} photo                    - nominal photo size in mm
  * @param {number} mmToPx                                  - mm → pixels scale
+ * @param {number} [zoom=1]                                - per-photo zoom multiplier
  */
-export function drawCropMarks(ctx, layout, photo, mmToPx) {
+export function drawCropMarks(ctx, layout, photo, mmToPx, zoom = 1) {
   ctx.strokeStyle = '#000000';
   ctx.lineWidth = Math.max(0.5, mmToPx * 0.15);
   const gapPx    = CROP_MARK_GAP * mmToPx;
   const lengthPx = CROP_MARK_LENGTH * mmToPx;
+  const drawW    = photo.w * zoom;  // actual drawn width in mm
+  const drawH    = photo.h * zoom;
 
   for (const pos of layout.positions) {
     const x = pos.x * mmToPx;
     const y = pos.y * mmToPx;
-    const w = photo.w * mmToPx;
-    const h = photo.h * mmToPx;
+    const w = drawW * mmToPx;
+    const h = drawH * mmToPx;
 
     // Top-left corner.
     line(ctx, x - gapPx,        y - gapPx, x - gapPx,        y - gapPx + lengthPx);
