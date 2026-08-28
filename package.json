@@ -1,0 +1,13 @@
+{
+  "name": "photosheet-maker",
+  "version": "0.1.0",
+  "description": "Browser-only photo sheet layout tool",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^2.0.0"
+  }
+}
