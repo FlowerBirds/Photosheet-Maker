@@ -77,6 +77,35 @@ button { font: inherit; }
 .card fieldset legend { font-size: 13px; color: #777; padding: 0 4px; }
 .card fieldset label { display: inline-flex; align-items: center; gap: 6px; margin-right: 12px; }
 .card fieldset input[type="number"] { width: 70px; }
+
+/* Slider rows: one control per row, easy to drag on mobile */
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+.slider-row label {
+  flex: 0 0 40px;
+  font-size: 13px;
+  color: #555;
+  margin: 0;
+}
+.slider-row input[type="range"] {
+  flex: 1;
+  margin: 0;
+  min-width: 0;
+  accent-color: #2d7ff9;
+  height: 32px;          /* larger touch target on mobile */
+}
+.slider-row .slider-value {
+  flex: 0 0 32px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #666;
+  font-size: 13px;
+}
+
 .hint { color: #888; font-size: 12px; margin: 6px 0 0; }
 
 /* ---------- Crop container ---------- */

@@ -59,16 +59,40 @@
 
         <fieldset>
           <legend>边距（mm）</legend>
-          <label>上 <input type="number" id="margin-top"    min="0" max="50" /></label>
-          <label>下 <input type="number" id="margin-bottom" min="0" max="50" /></label>
-          <label>左 <input type="number" id="margin-left"   min="0" max="50" /></label>
-          <label>右 <input type="number" id="margin-right"  min="0" max="50" /></label>
+          <div class="slider-row">
+            <label for="margin-top">上</label>
+            <input type="range" id="margin-top"    min="1" max="20" value="5" />
+            <span class="slider-value" id="margin-top-val">5</span>
+          </div>
+          <div class="slider-row">
+            <label for="margin-bottom">下</label>
+            <input type="range" id="margin-bottom" min="1" max="20" value="5" />
+            <span class="slider-value" id="margin-bottom-val">5</span>
+          </div>
+          <div class="slider-row">
+            <label for="margin-left">左</label>
+            <input type="range" id="margin-left"   min="1" max="20" value="5" />
+            <span class="slider-value" id="margin-left-val">5</span>
+          </div>
+          <div class="slider-row">
+            <label for="margin-right">右</label>
+            <input type="range" id="margin-right"  min="1" max="20" value="5" />
+            <span class="slider-value" id="margin-right-val">5</span>
+          </div>
         </fieldset>
 
         <fieldset>
           <legend>间距（mm）</legend>
-          <label>横向 <input type="number" id="gap-h" min="0" max="20" /></label>
-          <label>竖向 <input type="number" id="gap-v" min="0" max="20" /></label>
+          <div class="slider-row">
+            <label for="gap-h">横向</label>
+            <input type="range" id="gap-h" min="1" max="20" value="2" />
+            <span class="slider-value" id="gap-h-val">2</span>
+          </div>
+          <div class="slider-row">
+            <label for="gap-v">竖向</label>
+            <input type="range" id="gap-v" min="1" max="20" value="2" />
+            <span class="slider-value" id="gap-v-val">2</span>
+          </div>
         </fieldset>
       </section>
     </aside>
