@@ -32,7 +32,7 @@ const state = {
   originalImage: null,
   croppedCanvas: null,
   photoSize: '一寸',
-  paperSize: 'A4',
+  paperSize: '6寸（4R）',
   dpi: 350,
   margin: { top: 5, bottom: 5, left: 5, right: 5 },
   gap:    { h: 2, v: 2 },

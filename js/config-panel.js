@@ -68,7 +68,7 @@ export function initConfigPanel(els, onChange) {
 
   // Defaults.
   els.photoSize.value = '一寸';
-  els.paperSize.value = 'A4';
+  els.paperSize.value = '6寸（4R）';
   els.marginTop.value    = DEFAULT_MARGIN.top;
   els.marginBottom.value = DEFAULT_MARGIN.bottom;
   els.marginLeft.value   = DEFAULT_MARGIN.left;
