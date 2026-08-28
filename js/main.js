@@ -190,12 +190,12 @@ initConfigPanel(
     photoSize: $('select-photo-size'),
     paperSize: $('select-paper-size'),
     dpi:       $('select-dpi'),
-    marginTop: $('margin-top'),
-    marginBottom: $('margin-bottom'),
-    marginLeft: $('margin-left'),
-    marginRight: $('margin-right'),
-    gapH: $('gap-h'),
-    gapV: $('gap-v'),
+    marginTop:    $('margin-top'),    marginTopVal:    $('margin-top-val'),
+    marginBottom: $('margin-bottom'), marginBottomVal: $('margin-bottom-val'),
+    marginLeft:   $('margin-left'),   marginLeftVal:   $('margin-left-val'),
+    marginRight:  $('margin-right'),  marginRightVal:  $('margin-right-val'),
+    gapH:         $('gap-h'),         gapHVal:         $('gap-h-val'),
+    gapV:         $('gap-v'),         gapVVal:         $('gap-v-val'),
   },
   (patch) => {
     // If photoSize changed, update Cropper aspect ratio (if active).

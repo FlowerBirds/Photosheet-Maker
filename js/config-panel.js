@@ -19,15 +19,37 @@ function fillSelect(select, map) {
 }
 
 /**
+ * Wire a slider <input> to its mirror <span> so the displayed value
+ * updates in real time as the user drags.
+ *
+ * @param {HTMLInputElement} input
+ * @param {HTMLElement|null} mirror
+ */
+function bindSlider(input, mirror) {
+  if (!input) return;
+  const sync = () => {
+    if (mirror) mirror.textContent = input.value;
+  };
+  // 'input' fires while dragging; 'change' covers older mobile browsers
+  // that may only fire on release.
+  input.addEventListener('input', sync);
+  input.addEventListener('change', sync);
+  sync();
+}
+
+/**
  * Initialize all controls in the settings panel and wire them to callbacks.
  *
  * @param {{
  *   photoSize: HTMLSelectElement,
  *   paperSize: HTMLSelectElement,
  *   dpi:       HTMLSelectElement,
- *   marginTop: HTMLInputElement, marginBottom: HTMLInputElement,
- *   marginLeft: HTMLInputElement, marginRight: HTMLInputElement,
- *   gapH: HTMLInputElement, gapV: HTMLInputElement,
+ *   marginTop: HTMLInputElement, marginTopVal: HTMLElement,
+ *   marginBottom: HTMLInputElement, marginBottomVal: HTMLElement,
+ *   marginLeft: HTMLInputElement, marginLeftVal: HTMLElement,
+ *   marginRight: HTMLInputElement, marginRightVal: HTMLElement,
+ *   gapH: HTMLInputElement, gapHVal: HTMLElement,
+ *   gapV: HTMLInputElement, gapVVal: HTMLElement,
  * }} els
  * @param {(patch: object) => void} onChange   - called with a partial state patch
  */
@@ -54,23 +76,14 @@ export function initConfigPanel(els, onChange) {
   els.gapH.value         = DEFAULT_GAP.h;
   els.gapV.value         = DEFAULT_GAP.v;
 
-  // Mirror each slider's value into its sibling <span class="slider-value">.
-  // Look them up by id suffix (matches the ids in index.html).
-  const mirrors = [
-    ['marginTop', 'margin-top-val'],
-    ['marginBottom', 'margin-bottom-val'],
-    ['marginLeft', 'margin-left-val'],
-    ['marginRight', 'margin-right-val'],
-    ['gapH', 'gap-h-val'],
-    ['gapV', 'gap-v-val'],
-  ];
-  const mirrorEls = {};
-  for (const [key, id] of mirrors) {
-    mirrorEls[key] = document.getElementById(id);
-  }
-  const updateMirror = (key) => {
-    if (mirrorEls[key]) mirrorEls[key].textContent = els[key].value;
-  };
+  // Wire each slider to its mirror span. `bindSlider` runs the initial
+  // sync itself, so the displayed value reflects the defaults immediately.
+  bindSlider(els.marginTop,    els.marginTopVal);
+  bindSlider(els.marginBottom, els.marginBottomVal);
+  bindSlider(els.marginLeft,   els.marginLeftVal);
+  bindSlider(els.marginRight,  els.marginRightVal);
+  bindSlider(els.gapH,         els.gapHVal);
+  bindSlider(els.gapV,         els.gapVVal);
 
   // Debounced change handler for slider inputs.
   let timer = null;
@@ -92,17 +105,14 @@ export function initConfigPanel(els, onChange) {
       right:  Number(els.marginRight.value),
     },
   });
-  els.marginTop.addEventListener('input',    () => { updateMirror('marginTop');    debounced(marginPatch()); });
-  els.marginBottom.addEventListener('input', () => { updateMirror('marginBottom'); debounced(marginPatch()); });
-  els.marginLeft.addEventListener('input',   () => { updateMirror('marginLeft');   debounced(marginPatch()); });
-  els.marginRight.addEventListener('input',  () => { updateMirror('marginRight');  debounced(marginPatch()); });
+  els.marginTop.addEventListener('input',    () => debounced(marginPatch()));
+  els.marginBottom.addEventListener('input', () => debounced(marginPatch()));
+  els.marginLeft.addEventListener('input',   () => debounced(marginPatch()));
+  els.marginRight.addEventListener('input',  () => debounced(marginPatch()));
 
   const gapPatch = () => ({
     gap: { h: Number(els.gapH.value), v: Number(els.gapV.value) },
   });
-  els.gapH.addEventListener('input', () => { updateMirror('gapH'); debounced(gapPatch()); });
-  els.gapV.addEventListener('input', () => { updateMirror('gapV'); debounced(gapPatch()); });
-
-  // Initial mirror render (defaults).
-  for (const [key] of mirrors) updateMirror(key);
+  els.gapH.addEventListener('input', () => debounced(gapPatch()));
+  els.gapV.addEventListener('input', () => debounced(gapPatch()));
 }
