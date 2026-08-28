@@ -65,21 +65,18 @@ export async function exportImage(params, photoMap, paperMap) {
       drawCropMarks(ctx, layout, photo, mmToPx, zoom);
     }
 
-    // Footer: tool name (left), zoom (center), repo URL (right).
+    // Footer: single centered line with repo URL + zoom, separated by a bullet.
     // Small and faint — purely informational.
     const fontSize = Math.max(10, mmToPx * 2.5);
     ctx.fillStyle = '#999999';
     ctx.font = `${fontSize}px -apple-system, "Segoe UI", sans-serif`;
-    ctx.textBaseline = 'bottom';
-
-    ctx.textAlign = 'left';
-    ctx.fillText('Photosheet-Maker', 2 * mmToPx, canvasH - 1 * mmToPx);
-
     ctx.textAlign = 'center';
-    ctx.fillText(`${zoom.toFixed(2)}×`, canvasW / 2, canvasH - 1 * mmToPx);
-
-    ctx.textAlign = 'right';
-    ctx.fillText('github.com/FlowerBirds/Photosheet-Maker', canvasW - 2 * mmToPx, canvasH - 1 * mmToPx);
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(
+      `github.com/FlowerBirds/Photosheet-Maker • ${zoom.toFixed(2)}×`,
+      canvasW / 2,
+      canvasH - 1 * mmToPx
+    );
   }
 
   // Encode and trigger download.

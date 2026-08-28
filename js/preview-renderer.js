@@ -91,22 +91,18 @@ export function renderPreview(canvas, params, photoMap, paperMap, croppedCanvas)
     }
   }
 
-  // Footer: tool name (left), zoom (center), repo URL (right).
-  // Small and faint — purely informational, won't be exported (we don't
-  // draw it in exporter.js).
+  // Footer: single centered line with repo URL + zoom, separated by a bullet.
+  // Small and faint — purely informational.
   const fontSize = Math.max(10, scale * 3);
   ctx.fillStyle = '#999999';
   ctx.font = `${fontSize}px -apple-system, "Segoe UI", sans-serif`;
-  ctx.textBaseline = 'bottom';
-
-  ctx.textAlign = 'left';
-  ctx.fillText('Photosheet-Maker', 8 * scale, displayH - 4);
-
   ctx.textAlign = 'center';
-  ctx.fillText(`${zoom.toFixed(2)}×`, displayW / 2, displayH - 4);
-
-  ctx.textAlign = 'right';
-  ctx.fillText('github.com/FlowerBirds/Photosheet-Maker', displayW - 8 * scale, displayH - 4);
+  ctx.textBaseline = 'bottom';
+  ctx.fillText(
+    `github.com/FlowerBirds/Photosheet-Maker • ${zoom.toFixed(2)}×`,
+    displayW / 2,
+    displayH - 4
+  );
 
   return layout;
 }
