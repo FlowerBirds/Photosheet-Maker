@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Photosheet-Maker · 证件照排版工具</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- Cropper.js CSS via CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>📐 Photosheet-Maker</h1>
+    <div class="header-actions">
+      <button id="btn-reupload" class="btn-secondary" hidden>重新上传</button>
+      <button id="btn-recrop" class="btn-secondary" hidden>重新裁剪</button>
+      <button id="btn-export" class="btn-primary" disabled>导出图片</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Control panel (left on desktop, top on mobile) -->
+    <aside class="control-panel">
+      <!-- ① Upload -->
+      <section class="card" id="upload-section">
+        <h2>① 上传照片</h2>
+        <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" />
+        <p class="hint">支持 JPG / PNG / WebP，最大 20MB</p>
+      </section>
+
+      <!-- ② Crop + Rotate (visible only after upload) -->
+      <section class="card" id="crop-section" hidden>
+        <h2>② 裁剪与旋转</h2>
+        <div class="crop-container">
+          <img id="crop-image" alt="待裁剪图片" />
+        </div>
+        <div class="crop-actions">
+          <button id="btn-rotate-left"  class="btn-secondary">↺ 左旋转</button>
+          <button id="btn-rotate-right" class="btn-secondary">↻ 右旋转</button>
+          <button id="btn-finish-crop"  class="btn-primary">完成裁剪</button>
+        </div>
+      </section>
+
+      <!-- ③ Settings (visible after cropping) -->
+      <section class="card" id="settings-section" hidden>
+        <h2>③ 排版设置</h2>
+
+        <label>目标尺寸
+          <select id="select-photo-size"></select>
+        </label>
+
+        <label>相纸尺寸
+          <select id="select-paper-size"></select>
+        </label>
+
+        <label>输出 DPI
+          <select id="select-dpi"></select>
+        </label>
+
+        <fieldset>
+          <legend>边距（mm）</legend>
+          <label>上 <input type="number" id="margin-top"    min="0" max="50" /></label>
+          <label>下 <input type="number" id="margin-bottom" min="0" max="50" /></label>
+          <label>左 <input type="number" id="margin-left"   min="0" max="50" /></label>
+          <label>右 <input type="number" id="margin-right"  min="0" max="50" /></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>间距（mm）</legend>
+          <label>横向 <input type="number" id="gap-h" min="0" max="20" /></label>
+          <label>竖向 <input type="number" id="gap-v" min="0" max="20" /></label>
+        </fieldset>
+      </section>
+    </aside>
+
+    <!-- Preview area (right on desktop, bottom on mobile) -->
+    <section class="preview-area">
+      <div class="preview-wrapper">
+        <canvas id="preview-canvas"></canvas>
+      </div>
+
+      <div class="info-panel" id="info-panel">
+        <p>容纳：<span id="info-count">—</span> 张</p>
+        <p>输出：<span id="info-size">—</span></p>
+        <p id="info-warning" class="warning" hidden></p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast region -->
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- Cropper.js + our modules -->
+  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
