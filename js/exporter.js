@@ -65,14 +65,18 @@ export async function exportImage(params, photoMap, paperMap) {
       drawCropMarks(ctx, layout, photo, mmToPx, zoom);
     }
 
-    // Footer label: current zoom, bottom-center of the paper.
-    // Small and faint — purely informational so the user can identify
-    // the zoom level used to generate the file.
+    // Footer: tool name (left) and zoom (center) at the bottom of the paper.
+    // Small and faint — purely informational.
+    const fontSize = Math.max(10, mmToPx * 2.5);
     ctx.fillStyle = '#999999';
-    ctx.font = `${Math.max(10, mmToPx * 2.5)}px -apple-system, "Segoe UI", sans-serif`;
-    ctx.textAlign = 'center';
+    ctx.font = `${fontSize}px -apple-system, "Segoe UI", sans-serif`;
     ctx.textBaseline = 'bottom';
-    ctx.fillText(`${zoom.toFixed(2)}×`, canvasW / 2, canvasH - 4);
+
+    ctx.textAlign = 'left';
+    ctx.fillText('Photosheet-Maker', 2 * mmToPx, canvasH - 1 * mmToPx);
+
+    ctx.textAlign = 'center';
+    ctx.fillText(`${zoom.toFixed(2)}×`, canvasW / 2, canvasH - 1 * mmToPx);
   }
 
   // Encode and trigger download.

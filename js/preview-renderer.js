@@ -91,13 +91,18 @@ export function renderPreview(canvas, params, photoMap, paperMap, croppedCanvas)
     }
   }
 
-  // Footer label: current zoom, bottom-center of the paper.
+  // Footer: tool name (left) and zoom (center) at the bottom of the paper.
   // Small and faint — purely informational, won't be exported (we don't
   // draw it in exporter.js).
+  const fontSize = Math.max(10, scale * 3);
   ctx.fillStyle = '#999999';
-  ctx.font = `${Math.max(10, scale * 3)}px -apple-system, "Segoe UI", sans-serif`;
-  ctx.textAlign = 'center';
+  ctx.font = `${fontSize}px -apple-system, "Segoe UI", sans-serif`;
   ctx.textBaseline = 'bottom';
+
+  ctx.textAlign = 'left';
+  ctx.fillText('Photosheet-Maker', 8 * scale, displayH - 4);
+
+  ctx.textAlign = 'center';
   ctx.fillText(`${zoom.toFixed(2)}×`, displayW / 2, displayH - 4);
 
   return layout;
