@@ -89,5 +89,14 @@ export function renderPreview(canvas, params, photoMap, paperMap, croppedCanvas)
     }
   }
 
+  // Footer label: current zoom, bottom-center of the paper.
+  // Small and faint — purely informational, won't be exported (we don't
+  // draw it in exporter.js).
+  ctx.fillStyle = '#999999';
+  ctx.font = `${Math.max(10, scale * 3)}px -apple-system, "Segoe UI", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText(`${zoom.toFixed(2)}×`, displayW / 2, displayH - 4);
+
   return layout;
 }
