@@ -61,6 +61,15 @@ export async function exportImage(params, photoMap, paperMap) {
 
     // Crop marks track the actual (zoomed) photo edge.
     drawCropMarks(ctx, layout, photo, mmToPx, zoom);
+
+    // Footer label: current zoom, bottom-center of the paper.
+    // Small and faint — purely informational so the user can identify
+    // the zoom level used to generate the file.
+    ctx.fillStyle = '#999999';
+    ctx.font = `${Math.max(10, mmToPx * 2.5)}px -apple-system, "Segoe UI", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(`${zoom.toFixed(2)}×`, canvasW / 2, canvasH - 4);
   }
 
   // Encode and trigger download.
