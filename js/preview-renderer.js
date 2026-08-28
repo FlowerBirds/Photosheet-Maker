@@ -79,8 +79,10 @@ export function renderPreview(canvas, params, photoMap, paperMap, croppedCanvas)
         drawH * scale
       );
     }
-    // Crop marks track the actual (zoomed) photo edge.
-    drawCropMarks(ctx, layout, photo, scale, zoom);
+    // Crop marks are opt-in via the toggle in settings.
+    if (params.showCropMarks !== false) {
+      drawCropMarks(ctx, layout, photo, scale, zoom);
+    }
   } else {
     // Fallback placeholder if no cropped canvas yet.
     ctx.fillStyle = '#e0e0e0';

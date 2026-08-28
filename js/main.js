@@ -38,6 +38,7 @@ const state = {
   gap:    { h: 2, v: 2 },
   zoom: 1,        // per-photo zoom multiplier; does NOT affect layout
   rotation: 0,    // cumulative rotation in degrees (mod 360)
+  showCropMarks: true,
 };
 
 const cropperWrapper = createCropperWrapper(dom.cropImage);
@@ -94,6 +95,7 @@ function refresh() {
         gap: state.gap,
         rotation: state.rotation,
         zoom: state.zoom,
+        showCropMarks: state.showCropMarks,
       },
       PHOTO_SIZES, PAPER_SIZES,
       state.status === 'READY' ? state.croppedCanvas : null
@@ -199,6 +201,7 @@ initConfigPanel(
     gapH:         $('gap-h'),         gapHVal:         $('gap-h-val'),
     gapV:         $('gap-v'),         gapVVal:         $('gap-v-val'),
     zoom:         $('zoom'),          zoomVal:         $('zoom-val'),
+    showCropMarks: $('show-crop-marks'),
   },
   (patch) => {
     // If photoSize changed, update Cropper aspect ratio (if active).
@@ -238,6 +241,7 @@ dom.btnExport.addEventListener('click', async () => {
         gap: state.gap,
         rotation: state.rotation,
         zoom: state.zoom,
+        showCropMarks: state.showCropMarks,
         format,
       },
       PHOTO_SIZES, PAPER_SIZES

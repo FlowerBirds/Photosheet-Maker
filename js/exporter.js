@@ -11,6 +11,7 @@ import { drawCropMarks } from './crop-marks.js';
  *   gap:    {h:number, v:number},
  *   rotation?: number,
  *   zoom?: number,
+ *   showCropMarks?: boolean,
  *   format: 'jpeg'|'png',
  * }} params
  * @param {Record<string,{w:number,h:number}>} photoMap
@@ -20,7 +21,7 @@ import { drawCropMarks } from './crop-marks.js';
 export async function exportImage(params, photoMap, paperMap) {
   const {
     croppedCanvas, photoSize, paperSize, dpi, margin, gap,
-    rotation = 0, zoom = 1, format,
+    rotation = 0, zoom = 1, showCropMarks = true, format,
   } = params;
   const photoBase = photoMap[photoSize];
   const paper = paperMap[paperSize];
@@ -59,8 +60,10 @@ export async function exportImage(params, photoMap, paperMap) {
       );
     }
 
-    // Crop marks track the actual (zoomed) photo edge.
-    drawCropMarks(ctx, layout, photo, mmToPx, zoom);
+    // Crop marks track the actual (zoomed) photo edge — opt-in only.
+    if (showCropMarks) {
+      drawCropMarks(ctx, layout, photo, mmToPx, zoom);
+    }
 
     // Footer label: current zoom, bottom-center of the paper.
     // Small and faint — purely informational so the user can identify

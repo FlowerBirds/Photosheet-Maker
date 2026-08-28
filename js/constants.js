@@ -42,3 +42,6 @@ export const DEFAULT_ZOOM = 1;   // 1 = actual size
 export const ZOOM_MIN     = 0;
 export const ZOOM_MAX     = 2;
 export const ZOOM_STEP    = 0.01;
+
+// Show crop marks (角标) in preview and export. Toggleable in UI.
+export const DEFAULT_SHOW_CROP_MARKS = true;

@@ -106,6 +106,23 @@ button { font: inherit; }
   font-size: 13px;
 }
 
+/* Toggle row: a full-width clickable checkbox row. */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  cursor: pointer;
+  font-size: 14px;
+}
+.toggle-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #2d7ff9;
+  margin: 0;
+  cursor: pointer;
+}
+
 .hint { color: #888; font-size: 12px; margin: 6px 0 0; }
 
 /* ---------- Crop container ---------- */

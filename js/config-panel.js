@@ -1,6 +1,6 @@
 import {
   PHOTO_SIZES, PAPER_SIZES, DPI_OPTIONS,
-  DEFAULT_MARGIN, DEFAULT_GAP, DEFAULT_ZOOM,
+  DEFAULT_MARGIN, DEFAULT_GAP, DEFAULT_ZOOM, DEFAULT_SHOW_CROP_MARKS,
 } from './constants.js';
 
 /**
@@ -51,6 +51,7 @@ function bindSlider(input, mirror) {
  *   gapH: HTMLInputElement, gapHVal: HTMLElement,
  *   gapV: HTMLInputElement, gapVVal: HTMLElement,
  *   zoom: HTMLInputElement, zoomVal: HTMLElement,
+ *   showCropMarks: HTMLInputElement,
  * }} els
  * @param {(patch: object) => void} onChange   - called with a partial state patch
  */
@@ -77,6 +78,7 @@ export function initConfigPanel(els, onChange) {
   els.gapH.value         = DEFAULT_GAP.h;
   els.gapV.value         = DEFAULT_GAP.v;
   if (els.zoom) els.zoom.value = String(DEFAULT_ZOOM);
+  if (els.showCropMarks) els.showCropMarks.checked = DEFAULT_SHOW_CROP_MARKS;
 
   // Wire each slider to its mirror span. `bindSlider` runs the initial
   // sync itself, so the displayed value reflects the defaults immediately.
@@ -131,5 +133,12 @@ export function initConfigPanel(els, onChange) {
   // Zoom: dispatch immediately (no debounce) for smooth preview feedback.
   if (els.zoom) {
     els.zoom.addEventListener('input', () => onChange({ zoom: Number(els.zoom.value) }));
+  }
+
+  // Crop-marks toggle: dispatch immediately (no debounce).
+  if (els.showCropMarks) {
+    els.showCropMarks.addEventListener('change', () => onChange({
+      showCropMarks: els.showCropMarks.checked,
+    }));
   }
 }
