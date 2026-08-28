@@ -29,10 +29,11 @@ describe('calculateLayout', () => {
   it('returns 0 count when paper is too small', () => {
     const layout = calculateLayout(
       { w: 25, h: 35 },
-      { w: 50, h: 50 },
+      { w: 30, h: 30 },
       { top: 5, bottom: 5, left: 5, right: 5 },
       { h: 2, v: 2 }
     );
+    // usableW = 20 < 25 + 2, so cols = 0 → count = 0
     expect(layout.count).toBe(0);
     expect(layout.positions).toEqual([]);
   });
@@ -68,6 +69,6 @@ describe('calculateLayout', () => {
     expect(layout.cols).toBe(4);
     expect(layout.rows).toBe(5);
     expect(layout.positions[0]).toEqual({ x: 0, y: 10 });
-    expect(layout.positions[4]).toEqual({ x: 75, y: 10 });
+    expect(layout.positions[3]).toEqual({ x: 75, y: 10 }); // last column, first row
   });
 });
