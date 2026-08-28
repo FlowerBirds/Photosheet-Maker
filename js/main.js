@@ -121,12 +121,26 @@ bindUploader(
   dom.fileInput,
   (img) => {
     state.originalImage = img;
+    // img.src is now a blob: URL (from URL.createObjectURL).
+    // Cropper.js needs the <img> element to actually load the source —
+    // setting src and waiting one tick avoids a race on iOS Safari.
+    dom.cropImage.onload = () => {
+      const photo = PHOTO_SIZES[state.photoSize];
+      try {
+        cropperWrapper.init({ aspectRatio: photo.w / photo.h });
+      } catch (err) {
+        toast('初始化裁剪失败：' + err.message);
+        return;
+      }
+      state.rotation = 0;
+      setStatus('CROPPING');
+      refresh();
+      toast('图片加载完成，请调整裁剪框');
+    };
+    dom.cropImage.onerror = () => {
+      toast('图片显示失败，请尝试其他浏览器');
+    };
     dom.cropImage.src = img.src;
-    const photo = PHOTO_SIZES[state.photoSize];
-    cropperWrapper.init({ aspectRatio: photo.w / photo.h });
-    state.rotation = 0;
-    setStatus('CROPPING');
-    refresh();
   },
   (err) => toast(err.message)
 );

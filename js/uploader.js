@@ -1,5 +1,7 @@
 import { MAX_FILE_BYTES, ACCEPTED_TYPES } from './constants.js';
 
+const LOAD_TIMEOUT_MS = 15000;
+
 /**
  * Validate and load an image File.
  * @param {File} file
@@ -17,16 +19,46 @@ export function loadImageFile(file) {
     throw new Error(`文件过大（${(file.size / 1024 / 1024).toFixed(1)} MB），请压缩到 20MB 以下`);
   }
 
+  // Use URL.createObjectURL — more reliable than FileReader.readAsDataURL
+  // on iOS Safari and WeChat's built-in browser (X5 kernel).
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('文件读取失败'));
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onerror = () => reject(new Error('图片解析失败，请尝试其他图片'));
-      img.onload  = () => resolve(img);
-      img.src = e.target.result;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    // crossOrigin helps avoid tainted-canvas issues for some browsers.
+    img.crossOrigin = 'anonymous';
+
+    let settled = false;
+    const cleanup = () => {
+      URL.revokeObjectURL(url);
+      settled = true;
     };
-    reader.readAsDataURL(file);
+
+    // Some browsers (esp. older WeChat X5 on Android) fail to fire onload
+    // — fall back to checking img.complete after a timeout.
+    const timer = setTimeout(() => {
+      if (settled) return;
+      if (img.complete && img.naturalWidth > 0) {
+        cleanup();
+        resolve(img);
+      } else {
+        cleanup();
+        reject(new Error('图片加载超时，请尝试其他图片或浏览器'));
+      }
+    }, LOAD_TIMEOUT_MS);
+
+    img.onload = () => {
+      if (settled) return;
+      clearTimeout(timer);
+      // Keep the object URL alive because Cropper.js reuses img.src.
+      resolve(img);
+    };
+    img.onerror = () => {
+      if (settled) return;
+      clearTimeout(timer);
+      cleanup();
+      reject(new Error('图片解析失败，请尝试其他图片'));
+    };
+    img.src = url;
   });
 }
 
