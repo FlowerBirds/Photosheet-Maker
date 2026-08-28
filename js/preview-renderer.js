@@ -1,4 +1,5 @@
 import { calculateLayout } from './layout-engine.js';
+import { drawCropMarks } from './crop-marks.js';
 
 const PREVIEW_MAX_WIDTH_PX = 600;
 
@@ -56,6 +57,8 @@ export function renderPreview(canvas, params, photoMap, paperMap, croppedCanvas)
         photo.h * scale
       );
     }
+    // Show crop marks in preview so user can see final layout.
+    drawCropMarks(ctx, layout, photo, scale);
   } else {
     // Fallback placeholder if no cropped canvas yet.
     ctx.fillStyle = '#e0e0e0';

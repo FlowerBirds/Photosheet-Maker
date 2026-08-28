@@ -1,5 +1,5 @@
 import { calculateLayout } from './layout-engine.js';
-import { CROP_MARK_GAP, CROP_MARK_LENGTH } from './constants.js';
+import { drawCropMarks } from './crop-marks.js';
 
 /**
  * Generate the full-resolution output image and trigger a download.
@@ -66,48 +66,6 @@ export async function exportImage(params, photoMap, paperMap) {
   });
 
   triggerDownload(blob, `Photosheet_${Date.now()}.${format === 'png' ? 'png' : 'jpg'}`);
-}
-
-function drawCropMarks(ctx, layout, photo, mmToPx) {
-  ctx.strokeStyle = '#000000';
-  ctx.lineWidth = Math.max(1, mmToPx * 0.2);
-  const gapPx   = CROP_MARK_GAP * mmToPx;   // gap outside the photo edge
-  const lengthPx = CROP_MARK_LENGTH * mmToPx;
-
-  for (const pos of layout.positions) {
-    const x = pos.x * mmToPx;
-    const y = pos.y * mmToPx;
-    const w = photo.w * mmToPx;
-    const h = photo.h * mmToPx;
-
-    // The marks sit OUTSIDE each photo corner, with `gapPx` between the
-    // photo edge and the mark. Two short segments form an L-shape at each
-    // corner, so the photo can be cut cleanly without marks overlapping
-    // the photo content.
-
-    // Top-left corner.
-    line(ctx, x - gapPx,          y - gapPx, x - gapPx,          y - gapPx + lengthPx);
-    line(ctx, x - gapPx,          y - gapPx, x - gapPx + lengthPx, y - gapPx);
-
-    // Top-right corner.
-    line(ctx, x + w + gapPx,      y - gapPx, x + w + gapPx,      y - gapPx + lengthPx);
-    line(ctx, x + w + gapPx,      y - gapPx, x + w + gapPx - lengthPx, y - gapPx);
-
-    // Bottom-left corner.
-    line(ctx, x - gapPx,          y + h + gapPx, x - gapPx,          y + h + gapPx - lengthPx);
-    line(ctx, x - gapPx,          y + h + gapPx, x - gapPx + lengthPx, y + h + gapPx);
-
-    // Bottom-right corner.
-    line(ctx, x + w + gapPx,      y + h + gapPx, x + w + gapPx,      y + h + gapPx - lengthPx);
-    line(ctx, x + w + gapPx,      y + h + gapPx, x + w + gapPx - lengthPx, y + h + gapPx);
-  }
-}
-
-function line(ctx, x1, y1, x2, y2) {
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
 }
 
 function triggerDownload(blob, filename) {
