@@ -1,5 +1,5 @@
 import { calculateLayout } from './layout-engine.js';
-import { CROP_MARK_OFFSET, CROP_MARK_LENGTH } from './constants.js';
+import { CROP_MARK_GAP, CROP_MARK_LENGTH } from './constants.js';
 
 /**
  * Generate the full-resolution output image and trigger a download.
@@ -71,7 +71,7 @@ export async function exportImage(params, photoMap, paperMap) {
 function drawCropMarks(ctx, layout, photo, mmToPx) {
   ctx.strokeStyle = '#000000';
   ctx.lineWidth = Math.max(1, mmToPx * 0.2);
-  const offsetPx = CROP_MARK_OFFSET * mmToPx;
+  const gapPx   = CROP_MARK_GAP * mmToPx;   // gap outside the photo edge
   const lengthPx = CROP_MARK_LENGTH * mmToPx;
 
   for (const pos of layout.positions) {
@@ -80,21 +80,26 @@ function drawCropMarks(ctx, layout, photo, mmToPx) {
     const w = photo.w * mmToPx;
     const h = photo.h * mmToPx;
 
+    // The marks sit OUTSIDE each photo corner, with `gapPx` between the
+    // photo edge and the mark. Two short segments form an L-shape at each
+    // corner, so the photo can be cut cleanly without marks overlapping
+    // the photo content.
+
     // Top-left corner.
-    line(ctx, x - offsetPx,        y - offsetPx, x - offsetPx,        y - offsetPx + lengthPx);
-    line(ctx, x - offsetPx,        y - offsetPx, x - offsetPx + lengthPx, y - offsetPx);
+    line(ctx, x - gapPx,          y - gapPx, x - gapPx,          y - gapPx + lengthPx);
+    line(ctx, x - gapPx,          y - gapPx, x - gapPx + lengthPx, y - gapPx);
 
     // Top-right corner.
-    line(ctx, x + w + offsetPx,    y - offsetPx, x + w + offsetPx,    y - offsetPx + lengthPx);
-    line(ctx, x + w + offsetPx,    y - offsetPx, x + w + offsetPx - lengthPx, y - offsetPx);
+    line(ctx, x + w + gapPx,      y - gapPx, x + w + gapPx,      y - gapPx + lengthPx);
+    line(ctx, x + w + gapPx,      y - gapPx, x + w + gapPx - lengthPx, y - gapPx);
 
     // Bottom-left corner.
-    line(ctx, x - offsetPx,        y + h + offsetPx, x - offsetPx,        y + h + offsetPx - lengthPx);
-    line(ctx, x - offsetPx,        y + h + offsetPx, x - offsetPx + lengthPx, y + h + offsetPx);
+    line(ctx, x - gapPx,          y + h + gapPx, x - gapPx,          y + h + gapPx - lengthPx);
+    line(ctx, x - gapPx,          y + h + gapPx, x - gapPx + lengthPx, y + h + gapPx);
 
     // Bottom-right corner.
-    line(ctx, x + w + offsetPx,    y + h + offsetPx, x + w + offsetPx,    y + h + offsetPx - lengthPx);
-    line(ctx, x + w + offsetPx,    y + h + offsetPx, x + w + offsetPx - lengthPx, y + h + offsetPx);
+    line(ctx, x + w + gapPx,      y + h + gapPx, x + w + gapPx,      y + h + gapPx - lengthPx);
+    line(ctx, x + w + gapPx,      y + h + gapPx, x + w + gapPx - lengthPx, y + h + gapPx);
   }
 }
 

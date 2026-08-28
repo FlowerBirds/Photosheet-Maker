@@ -32,5 +32,7 @@ export const MAX_FILE_BYTES  = 20 * 1024 * 1024; // 20 MB
 export const ACCEPTED_TYPES  = ['image/jpeg', 'image/png', 'image/webp'];
 
 // Crop-mark geometry in millimeters.
-export const CROP_MARK_OFFSET = 3; // mm inset from photo edge
+// Crop marks are drawn OUTSIDE the photo (with a small gap) so they don't
+// overlap with the photo content.
+export const CROP_MARK_GAP   = 1; // mm gap between photo edge and mark
 export const CROP_MARK_LENGTH = 5; // mm line length
