@@ -30,13 +30,21 @@ export function renderPreview(canvas, params, photoMap, paperMap, croppedCanvas)
   const rotation = params.rotation || 0;
   const photo = rotation % 180 === 0 ? photoBase : { w: photoBase.h, h: photoBase.w };
 
-  // Compute the largest scale that lets the preview fit within both the
-  // container width and the viewport height. This prevents the canvas
-  // from being stretched on narrow (mobile) screens.
+  // Compute the largest scale that fits the preview within the available
+  // space without stretching. Strategy differs by viewport:
+  //   - Desktop (≥768px): width-first at PREVIEW_MAX_WIDTH_PX, with a tall
+  //     height cap so A4/3A still renders large.
+  //   - Mobile:  width = container width, height = 70vh (prevents
+  //     stretching on narrow screens).
   const container = canvas.parentElement;
   const containerW = container ? container.clientWidth : window.innerWidth;
-  const maxW = Math.max(50, Math.min(PREVIEW_MAX_WIDTH_PX, containerW - WRAPPER_PADDING_PX));
-  const maxH = Math.max(50, window.innerHeight * PREVIEW_MAX_HEIGHT_VH);
+  const isDesktop = window.innerWidth >= 768;
+  const maxW = isDesktop
+    ? PREVIEW_MAX_WIDTH_PX
+    : Math.max(50, containerW - WRAPPER_PADDING_PX);
+  const maxH = isDesktop
+    ? Math.max(PREVIEW_MAX_WIDTH_PX, window.innerHeight - 200)
+    : Math.max(50, window.innerHeight * PREVIEW_MAX_HEIGHT_VH);
   const scale = Math.min(maxW / paper.w, maxH / paper.h);
   const displayW = paper.w * scale;
   const displayH = paper.h * scale;
