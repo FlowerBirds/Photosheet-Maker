@@ -76,7 +76,7 @@ export function initConfigPanel(els, onChange) {
   els.marginRight.value  = DEFAULT_MARGIN.right;
   els.gapH.value         = DEFAULT_GAP.h;
   els.gapV.value         = DEFAULT_GAP.v;
-  els.zoom.value         = String(DEFAULT_ZOOM);
+  if (els.zoom) els.zoom.value = String(DEFAULT_ZOOM);
 
   // Wire each slider to its mirror span. `bindSlider` runs the initial
   // sync itself, so the displayed value reflects the defaults immediately.

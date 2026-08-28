@@ -198,6 +198,7 @@ initConfigPanel(
     marginRight:  $('margin-right'),  marginRightVal:  $('margin-right-val'),
     gapH:         $('gap-h'),         gapHVal:         $('gap-h-val'),
     gapV:         $('gap-v'),         gapVVal:         $('gap-v-val'),
+    zoom:         $('zoom'),          zoomVal:         $('zoom-val'),
   },
   (patch) => {
     // If photoSize changed, update Cropper aspect ratio (if active).
