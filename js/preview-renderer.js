@@ -91,7 +91,7 @@ export function renderPreview(canvas, params, photoMap, paperMap, croppedCanvas)
     }
   }
 
-  // Footer: tool name (left) and zoom (center) at the bottom of the paper.
+  // Footer: tool name (left), zoom (center), repo URL (right).
   // Small and faint — purely informational, won't be exported (we don't
   // draw it in exporter.js).
   const fontSize = Math.max(10, scale * 3);
@@ -104,6 +104,9 @@ export function renderPreview(canvas, params, photoMap, paperMap, croppedCanvas)
 
   ctx.textAlign = 'center';
   ctx.fillText(`${zoom.toFixed(2)}×`, displayW / 2, displayH - 4);
+
+  ctx.textAlign = 'right';
+  ctx.fillText('github.com/FlowerBirds/Photosheet-Maker', displayW - 8 * scale, displayH - 4);
 
   return layout;
 }

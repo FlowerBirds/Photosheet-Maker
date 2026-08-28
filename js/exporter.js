@@ -65,7 +65,7 @@ export async function exportImage(params, photoMap, paperMap) {
       drawCropMarks(ctx, layout, photo, mmToPx, zoom);
     }
 
-    // Footer: tool name (left) and zoom (center) at the bottom of the paper.
+    // Footer: tool name (left), zoom (center), repo URL (right).
     // Small and faint — purely informational.
     const fontSize = Math.max(10, mmToPx * 2.5);
     ctx.fillStyle = '#999999';
@@ -77,6 +77,9 @@ export async function exportImage(params, photoMap, paperMap) {
 
     ctx.textAlign = 'center';
     ctx.fillText(`${zoom.toFixed(2)}×`, canvasW / 2, canvasH - 1 * mmToPx);
+
+    ctx.textAlign = 'right';
+    ctx.fillText('github.com/FlowerBirds/Photosheet-Maker', canvasW - 2 * mmToPx, canvasH - 1 * mmToPx);
   }
 
   // Encode and trigger download.
