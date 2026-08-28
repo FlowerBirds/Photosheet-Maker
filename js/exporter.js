@@ -9,6 +9,7 @@ import { CROP_MARK_OFFSET, CROP_MARK_LENGTH } from './constants.js';
  *   photoSize: string, paperSize: string, dpi: number,
  *   margin: {top:number,bottom:number,left:number,right:number},
  *   gap:    {h:number, v:number},
+ *   rotation?: number,
  *   format: 'jpeg'|'png',
  * }} params
  * @param {Record<string,{w:number,h:number}>} photoMap
@@ -16,9 +17,11 @@ import { CROP_MARK_OFFSET, CROP_MARK_LENGTH } from './constants.js';
  * @returns {Promise<void>}
  */
 export async function exportImage(params, photoMap, paperMap) {
-  const { croppedCanvas, photoSize, paperSize, dpi, margin, gap, format } = params;
-  const photo = photoMap[photoSize];
+  const { croppedCanvas, photoSize, paperSize, dpi, margin, gap, rotation = 0, format } = params;
+  const photoBase = photoMap[photoSize];
   const paper = paperMap[paperSize];
+  // Account for rotation: a 90°/270° rotation swaps width and height.
+  const photo = rotation % 180 === 0 ? photoBase : { w: photoBase.h, h: photoBase.w };
 
   // mm → pixels at output DPI.
   const mmToPx = dpi / 25.4;

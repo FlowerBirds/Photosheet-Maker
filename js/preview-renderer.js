@@ -10,6 +10,7 @@ const PREVIEW_MAX_WIDTH_PX = 600;
  *   photoSize: string, paperSize: string,
  *   margin: {top:number,bottom:number,left:number,right:number},
  *   gap:    {h:number, v:number},
+ *   rotation?: number,
  * }} params
  * @param {Record<string,{w:number,h:number}>} photoMap
  * @param {Record<string,{w:number,h:number}>} paperMap
@@ -17,9 +18,13 @@ const PREVIEW_MAX_WIDTH_PX = 600;
  */
 export function renderPreview(canvas, params, photoMap, paperMap, croppedCanvas) {
   const ctx = canvas.getContext('2d');
-  const photo = photoMap[params.photoSize];
+  const photoBase = photoMap[params.photoSize];
   const paper = paperMap[params.paperSize];
-  if (!photo || !paper) return;
+  if (!photoBase || !paper) return;
+
+  // Account for rotation: a 90°/270° rotation swaps width and height.
+  const rotation = params.rotation || 0;
+  const photo = rotation % 180 === 0 ? photoBase : { w: photoBase.h, h: photoBase.w };
 
   // Calculate scale to fit preview within PREVIEW_MAX_WIDTH_PX.
   const scale = PREVIEW_MAX_WIDTH_PX / paper.w;

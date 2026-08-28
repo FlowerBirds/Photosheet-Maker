@@ -41,6 +41,16 @@ const state = {
 
 const cropperWrapper = createCropperWrapper(dom.cropImage);
 
+// ---------- Helpers ----------
+/**
+ * Return the photo size after accounting for cumulative rotation.
+ * Rotating 90° or 270° swaps width and height (横竖互换).
+ */
+function getEffectivePhotoSize(photoSize, rotation) {
+  const photo = PHOTO_SIZES[photoSize];
+  return rotation % 180 === 0 ? photo : { w: photo.h, h: photo.w };
+}
+
 // ---------- Toast ----------
 let toastTimer = null;
 function toast(msg, ms = 3000) {
@@ -73,10 +83,16 @@ function setState(patch) {
 // ---------- Refresh (recalculate + redraw) ----------
 function refresh() {
   if (state.status === 'READY' || state.status === 'CROPPING') {
+    const effectiveSize = getEffectivePhotoSize(state.photoSize, state.rotation);
     const layout = renderPreview(
       dom.preview,
-      { photoSize: state.photoSize, paperSize: state.paperSize,
-        margin: state.margin, gap: state.gap },
+      {
+        photoSize: state.photoSize,
+        paperSize: state.paperSize,
+        margin: state.margin,
+        gap: state.gap,
+        rotation: state.rotation,
+      },
       PHOTO_SIZES, PAPER_SIZES,
       state.status === 'READY' ? state.croppedCanvas : null
     );
@@ -86,7 +102,8 @@ function refresh() {
       const paper = PAPER_SIZES[state.paperSize];
       const w = Math.round(paper.w * state.dpi / 25.4);
       const h = Math.round(paper.h * state.dpi / 25.4);
-      dom.infoSize.textContent = `${w} × ${h} px @ ${state.dpi} DPI`;
+      const orient = effectiveSize.w >= effectiveSize.h ? '横版' : '竖版';
+      dom.infoSize.textContent = `${w} × ${h} px @ ${state.dpi} DPI · ${orient}`;
       if (layout.count === 0) {
         dom.infoWarning.textContent = '当前设置无法容纳任何照片，请缩小边距/间距或换大相纸';
         dom.infoWarning.hidden = false;
@@ -202,6 +219,7 @@ dom.btnExport.addEventListener('click', async () => {
         dpi: state.dpi,
         margin: state.margin,
         gap: state.gap,
+        rotation: state.rotation,
         format,
       },
       PHOTO_SIZES, PAPER_SIZES
