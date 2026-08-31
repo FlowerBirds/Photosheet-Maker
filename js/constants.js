@@ -48,11 +48,17 @@ export const DEFAULT_SHOW_CROP_MARKS = true;
 
 // ---------- Card maker ----------
 
-// Card size presets (mm).
+// Card size presets (mm). 6寸系列按"6寸相纸可裁切"组织:
+//   - 6寸 = 整张 6寸纸
+//   - 6寸 1/2 = 半张（横切 102×76，2 张/纸）
+//   - 6寸 1/4 = 四分之一（再纵切 51×76，4 张/纸）
 export const CARD_SIZES = {
-  '一寸':   { w: 25, h: 35 },
-  '二寸':   { w: 35, h: 49 },
-  '自定义': { w: 90, h: 54 }, // user-editable; default like a business card
+  '一寸':     { w: 25, h: 35 },
+  '二寸':     { w: 35, h: 49 },
+  '6寸 1/4':  { w: 51, h: 76 },
+  '6寸 1/2':  { w: 102, h: 76 },
+  '6寸':      { w: 102, h: 152 },
+  '自定义':   { w: 90, h: 54 },
 };
 export const DEFAULT_CARD_SIZE = '一寸';
 
