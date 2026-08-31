@@ -53,8 +53,8 @@ export function initCardEditor(els) {
   let selectedId = null;            // currently selected element id
   let nextId = 1;
   let dragOffset = null;            // { dx, dy } in mm during drag
-  // Card-level border. Default: 1mm gray.
-  const border = { width: 1, color: '#888888' };
+  // Card-level border. Default: 0.1mm gray (~1px at 350dpi).
+  const border = { width: 0.1, color: '#888888' };
 
   // --- Public init ---
 
