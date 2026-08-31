@@ -71,4 +71,17 @@ describe('calculateLayout', () => {
     expect(layout.positions[0]).toEqual({ x: 0, y: 10 });
     expect(layout.positions[3]).toEqual({ x: 75, y: 10 }); // last column, first row
   });
+
+  it('accepts any rectangular sourceSize (not just photos)', () => {
+    // 90x54 business card into A4 with 10mm margins and 0 gap.
+    const layout = calculateLayout(
+      { w: 90, h: 54 },
+      { w: 210, h: 297 },
+      { top: 10, bottom: 10, left: 10, right: 10 },
+      { h: 0, v: 0 }
+    );
+    expect(layout.cols).toBe(2);
+    expect(layout.rows).toBe(5);
+    expect(layout.count).toBe(10);
+  });
 });
