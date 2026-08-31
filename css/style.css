@@ -363,6 +363,18 @@ button { font: inherit; }
 .element-row .unit {
   color: #999;
 }
+.element-row .dim-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.element-row .num-input input {
+  width: 44px;
+  padding: 2px 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+}
 
 /* Visually-hidden but still in layout (so .click() works on file inputs). */
 .visually-hidden {

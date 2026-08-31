@@ -267,6 +267,26 @@ export function initCardEditor(els) {
     return { x: el.x, y: el.y, w: textW / mmToPx, h: el.fontSize * 1.2 };
   }
 
+  /** Create a small number input (mm) with click-bubbling suppressed. */
+  function makeNumberInput(label, value, min, max, step, onChange) {
+    const wrap = document.createElement('span');
+    wrap.className = 'num-input';
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = String(min);
+    input.max = String(max);
+    input.step = String(step);
+    input.value = String(value);
+    input.title = `${label} (mm)`;
+    input.addEventListener('input', () => {
+      const v = Number(input.value);
+      if (Number.isFinite(v) && v >= min && v <= max) onChange(v);
+    });
+    input.addEventListener('click', (e) => e.stopPropagation());
+    wrap.appendChild(input);
+    return wrap;
+  }
+
   function renderElementList() {
     els.elementList.innerHTML = '';
     if (elements.length === 0) {
@@ -323,6 +343,17 @@ export function initCardEditor(els) {
         editBtn.title = '编辑文本内容';
         editBtn.addEventListener('click', () => beginEditText(el));
         row.appendChild(editBtn);
+      }
+
+      if (el.type === 'image') {
+        // Width / height inputs (mm).
+        const dimWrap = document.createElement('span');
+        dimWrap.className = 'dim-wrap';
+        const wIn = makeNumberInput('宽', el.w, 1, 200, 0.5, (v) => { el.w = v; drawDesigner(); });
+        const hIn = makeNumberInput('高', el.h, 1, 200, 0.5, (v) => { el.h = v; drawDesigner(); });
+        dimWrap.appendChild(wIn);
+        dimWrap.appendChild(hIn);
+        row.appendChild(dimWrap);
       }
 
       const delBtn = document.createElement('button');
