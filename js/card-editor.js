@@ -269,25 +269,8 @@ export function initCardEditor(els) {
     return { x: el.x, y: el.y, w: textW / mmToPx, h: el.fontSize * 1.2 };
   }
 
-  /** Create a small number input (mm) with click-bubbling suppressed. */
-  function makeNumberInput(label, value, min, max, step, onChange) {
-    const wrap = document.createElement('span');
-    wrap.className = 'num-input';
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.min = String(min);
-    input.max = String(max);
-    input.step = String(step);
-    input.value = String(value);
-    input.title = `${label} (mm)`;
-    input.addEventListener('input', () => {
-      const v = Number(input.value);
-      if (Number.isFinite(v) && v >= min && v <= max) onChange(v);
-    });
-    input.addEventListener('click', (e) => e.stopPropagation());
-    wrap.appendChild(input);
-    return wrap;
-  }
+  /** Round to 1 decimal place (for cleaner UI). */
+  function round1(n) { return Math.round(n * 10) / 10; }
 
   function renderElementList() {
     els.elementList.innerHTML = '';
@@ -351,8 +334,8 @@ export function initCardEditor(els) {
         // Width / height inputs (mm). Aspect lock (default true) keeps ratio.
         const dimWrap = document.createElement('span');
         dimWrap.className = 'dim-wrap';
-        const aspect = el.w / el.h;  // captured at render time
-        el._aspect = aspect;
+        // Ensure locked state has a fresh aspect captured from current w/h.
+        if (el.aspectLocked) el._aspect = el.w / el.h || 1;
         const lockBtn = document.createElement('button');
         lockBtn.className = 'btn-secondary aspect-toggle';
         lockBtn.title = el.aspectLocked
@@ -363,27 +346,56 @@ export function initCardEditor(els) {
           e.stopPropagation();
           el.aspectLocked = !el.aspectLocked;
           if (el.aspectLocked) {
-            // Re-capture aspect from current values.
             el._aspect = el.w / el.h || 1;
           }
           renderElementList();
           drawDesigner();
         });
+        const wInput = document.createElement('input');
+        wInput.type = 'number';
+        wInput.min = '1';
+        wInput.max = '200';
+        wInput.step = '0.5';
+        wInput.value = String(el.w);
+        wInput.title = '宽 (mm)';
+        wInput.addEventListener('click', (e) => e.stopPropagation());
+        const hInput = document.createElement('input');
+        hInput.type = 'number';
+        hInput.min = '1';
+        hInput.max = '200';
+        hInput.step = '0.5';
+        hInput.value = String(el.h);
+        hInput.title = '高 (mm)';
+        hInput.addEventListener('click', (e) => e.stopPropagation());
         const onW = (v) => {
+          if (!Number.isFinite(v) || v < 1 || v > 200) return;
           el.w = v;
-          if (el.aspectLocked) el.h = v / el._aspect;
+          if (el.aspectLocked && el._aspect) {
+            el.h = v / el._aspect;
+            hInput.value = String(round1(el.h));
+          }
           drawDesigner();
         };
         const onH = (v) => {
+          if (!Number.isFinite(v) || v < 1 || v > 200) return;
           el.h = v;
-          if (el.aspectLocked) el.w = v * el._aspect;
+          if (el.aspectLocked && el._aspect) {
+            el.w = v * el._aspect;
+            wInput.value = String(round1(el.w));
+          }
           drawDesigner();
         };
-        const wIn = makeNumberInput('宽', el.w, 1, 200, 0.5, onW);
-        const hIn = makeNumberInput('高', el.h, 1, 200, 0.5, onH);
-        dimWrap.appendChild(wIn);
+        wInput.addEventListener('input', () => onW(Number(wInput.value)));
+        hInput.addEventListener('input', () => onH(Number(hInput.value)));
+        const wWrap = document.createElement('span');
+        wWrap.className = 'num-input';
+        wWrap.appendChild(wInput);
+        const hWrap = document.createElement('span');
+        hWrap.className = 'num-input';
+        hWrap.appendChild(hInput);
+        dimWrap.appendChild(wWrap);
         dimWrap.appendChild(lockBtn);
-        dimWrap.appendChild(hIn);
+        dimWrap.appendChild(hWrap);
         row.appendChild(dimWrap);
       }
 
