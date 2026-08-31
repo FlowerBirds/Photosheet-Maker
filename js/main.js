@@ -313,9 +313,8 @@ dom.btnExport.addEventListener('click', async () => {
 const photoSections = [dom.uploadSection, dom.cropSection, dom.settings];
 const cardSections  = [dom.cardSection];
 
-// modeTab's side effects attach to the buttons; we don't need to call its
-// methods from main.js today, but keep the binding available for future use.
-const modeTab = createModeTab({
+// createModeTab attaches listeners to the tab buttons (its side effect).
+createModeTab({
   photoBtn: dom.tabPhoto,
   cardBtn:  dom.tabCard,
   photoSections,
