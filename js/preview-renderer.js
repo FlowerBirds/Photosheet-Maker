@@ -66,8 +66,8 @@ export function renderPreview(canvas, params, paperMap, sourceItems) {
     ctx.drawImage(item.canvas, pos.x * scale, pos.y * scale, drawW * scale, drawH * scale);
   });
 
-  // Crop marks only for photo (repeat) mode; cards ignore them.
-  if (params.drawing === 'repeat' && params.showCropMarks !== false) {
+  // Crop marks: shared toggle across both modes. Cards always pass zoom=1.
+  if (params.showCropMarks !== false) {
     drawCropMarks(ctx, layout, sourceSize, scale, zoom);
   }
 

@@ -20,7 +20,7 @@ import { drawCropMarks } from './crop-marks.js';
 export async function exportImage(params, paperMap) {
   const {
     sourceItems, paperSize, dpi, margin, gap,
-    drawing, zoom = 1, showCropMarks = true, format,
+    zoom = 1, showCropMarks = true, format,
   } = params;
   if (!sourceItems || sourceItems.length === 0) {
     throw new Error('没有可导出的内容');
@@ -56,7 +56,8 @@ export async function exportImage(params, paperMap) {
     );
   });
 
-  if (drawing === 'repeat' && showCropMarks) {
+  // Crop marks: shared toggle across both modes. Cards always pass zoom=1.
+  if (showCropMarks) {
     drawCropMarks(ctx, layout, sourceSize, mmToPx, zoom);
   }
 
