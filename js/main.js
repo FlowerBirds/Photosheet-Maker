@@ -45,8 +45,11 @@ const dom = {
   elementList:       $('card-element-list'),
   btnComplete:       $('btn-complete-design'),
   btnRedesign:       $('btn-redesign'),
-  cardBorderWidth:   $('card-border-width'),
-  cardBorderColor:   $('card-border-color'),
+  cardBorderWidth:    $('card-border-width'),
+  cardBorderColor:    $('card-border-color'),
+  cardBorderWidthVal: $('card-border-width-val'),
+  cardWVal:           $('card-w-val'),
+  cardHVal:           $('card-h-val'),
 };
 
 // ---------- State ----------
@@ -350,6 +353,9 @@ const cardEditor = initCardEditor({
   cardH:        dom.cardH,
   cardBorderWidth: dom.cardBorderWidth,
   cardBorderColor: dom.cardBorderColor,
+  cardBorderWidthVal: dom.cardBorderWidthVal,
+  cardWVal: dom.cardWVal,
+  cardHVal: dom.cardHVal,
   getState:     () => ({ paperSize: state.paperSize, dpi: state.dpi }),
   setSourceItems: (items) => { state.sourceItems = items; },
   setPhase: (phase) => {

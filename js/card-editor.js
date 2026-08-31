@@ -24,7 +24,10 @@ const DEFAULT_FONT_SIZE_MM = 5;  // mm — reasonable starting size for new text
  *   btnComplete:  HTMLButtonElement,
  *   btnRedesign:  HTMLButtonElement,
  *   cardBorderWidth: HTMLInputElement,
+ *   cardBorderWidthVal: HTMLElement,
  *   cardBorderColor: HTMLInputElement,
+ *   cardWVal: HTMLElement,
+ *   cardHVal: HTMLElement,
  *   // Card size controls (shared with arrange phase)
  *   selectSize:   HTMLSelectElement,
  *   customRow:    HTMLElement,
@@ -92,15 +95,18 @@ export function initCardEditor(els) {
     });
   });
   els.cardW.addEventListener('input', () => {
+    if (els.cardWVal) els.cardWVal.textContent = String(els.cardW.value);
     if (phase === 'designing') drawDesigner();
   });
   els.cardH.addEventListener('input', () => {
+    if (els.cardHVal) els.cardHVal.textContent = String(els.cardH.value);
     if (phase === 'designing') drawDesigner();
   });
 
   // Border controls.
   els.cardBorderWidth.addEventListener('input', () => {
     border.width = clampBorderWidth(Number(els.cardBorderWidth.value));
+    mirrorBorderWidth();
     if (phase === 'designing') drawDesigner();
     else if (phase === 'arranging') rebuildArrangeItem();
   });
@@ -227,7 +233,16 @@ export function initCardEditor(els) {
       els.cardW.value = String(preset.w);
       els.cardH.value = String(preset.h);
     }
+    if (els.cardWVal) els.cardWVal.textContent = String(els.cardW.value);
+    if (els.cardHVal) els.cardHVal.textContent = String(els.cardH.value);
     els.customRow.hidden = sel !== '自定义';
+  }
+
+  // Mirror display for slider values (border width may be a decimal).
+  function mirrorBorderWidth() {
+    if (els.cardBorderWidthVal) {
+      els.cardBorderWidthVal.textContent = Number(els.cardBorderWidth.value).toFixed(1);
+    }
   }
 
   function switchPhase(next) {
