@@ -251,14 +251,21 @@ button { font: inherit; }
 
 .card-field-row {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 0;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
   border-bottom: 1px dashed #eee;
 }
 .card-field-row:last-child { border-bottom: none; }
+.card-field-row .field-main,
+.card-field-row .field-detail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .card-field-row input[type="checkbox"] {
   width: 16px; height: 16px;
+  flex: 0 0 auto;
 }
 .card-field-row input[type="text"] {
   flex: 1;
@@ -266,6 +273,7 @@ button { font: inherit; }
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 13px;
+  min-width: 0; /* allow flex shrink inside narrow panel */
 }
 .card-field-row select,
 .card-field-row input[type="color"] {
@@ -273,6 +281,10 @@ button { font: inherit; }
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 13px;
+  flex: 0 0 auto;
+}
+.card-field-row .field-detail {
+  padding-left: 22px; /* align with text inputs (skip checkbox column) */
 }
 .card-field-row .reorder {
   display: inline-flex;

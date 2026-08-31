@@ -106,36 +106,43 @@ export function initCardEditor(els) {
       const row = document.createElement('div');
       row.className = 'card-field-row';
       row.innerHTML = `
-        <input type="checkbox" ${f.enabled ? 'checked' : ''} title="启用" />
-        <input type="text" value="${escapeHtml(f.label)}" title="字段标签" />
-        <input type="text" value="${escapeHtml(f.default)}" placeholder="默认值" title="默认值" />
-        <select title="字号">
-            ${SIZE_PRESETS.map(s => `<option value="${s}" ${s===f.size?'selected':''}>${SIZE_LABELS[s]}</option>`).join('')}
-          </select>
-        <input type="color" value="${f.color}" title="颜色" />
-        <span class="reorder">
-          <button data-act="up"   ${i===0?'disabled':''}>↑</button>
-          <button data-act="down" ${i===els.fields.length-1?'disabled':''}>↓</button>
-        </span>
-        <button class="delete-field btn-secondary" data-act="del">删</button>
+        <div class="field-main">
+          <input type="checkbox" ${f.enabled ? 'checked' : ''} title="启用" />
+          <input type="text" value="${escapeHtml(f.label)}" title="字段标签" />
+          <input type="text" value="${escapeHtml(f.default)}" placeholder="默认值" title="默认值" />
+        </div>
+        <div class="field-detail">
+          <select title="字号">
+              ${SIZE_PRESETS.map(s => `<option value="${s}" ${s===f.size?'selected':''}>${SIZE_LABELS[s]}</option>`).join('')}
+            </select>
+          <input type="color" value="${f.color}" title="颜色" />
+          <span class="reorder">
+            <button data-act="up"   ${i===0?'disabled':''}>↑</button>
+            <button data-act="down" ${i===els.fields.length-1?'disabled':''}>↓</button>
+          </span>
+          <button class="delete-field btn-secondary" data-act="del">删</button>
+        </div>
       `;
-      const [chk, labelIn, defIn, sel, colorIn] = row.children;
+      const main = row.querySelector('.field-main');
+      const detail = row.querySelector('.field-detail');
+      const [chk, labelIn, defIn] = main.children;
+      const [sel, colorIn] = detail.children;
 
       chk.addEventListener('change', () => { f.enabled = chk.checked; rebuildSourceItems(); });
       labelIn.addEventListener('input', () => { f.label = labelIn.value; debounced(rebuildSourceItems); });
       defIn.addEventListener('input',   () => { f.default = defIn.value; debounced(rebuildSourceItems); });
       sel.addEventListener('change',    () => { f.size = sel.value; rebuildSourceItems(); });
       colorIn.addEventListener('input', () => { f.color = colorIn.value; debounced(rebuildSourceItems); });
-      row.querySelector('[data-act="del"]').addEventListener('click', () => {
+      detail.querySelector('[data-act="del"]').addEventListener('click', () => {
         els.fields.splice(i, 1);
         renderFields(); updateRowCount(); rebuildSourceItems();
       });
-      row.querySelector('[data-act="up"]').addEventListener('click', () => {
+      detail.querySelector('[data-act="up"]').addEventListener('click', () => {
         if (i === 0) return;
         [els.fields[i-1], els.fields[i]] = [els.fields[i], els.fields[i-1]];
         renderFields(); rebuildSourceItems();
       });
-      row.querySelector('[data-act="down"]').addEventListener('click', () => {
+      detail.querySelector('[data-act="down"]').addEventListener('click', () => {
         if (i === els.fields.length - 1) return;
         [els.fields[i+1], els.fields[i]] = [els.fields[i], els.fields[i+1]];
         renderFields(); rebuildSourceItems();
