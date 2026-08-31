@@ -410,6 +410,9 @@ export function initCardEditor(els) {
         i.onerror = () => reject(new Error('图片加载失败'));
         i.src = url;
       });
+      if (!img.naturalWidth || !img.naturalHeight) {
+        throw new Error('图片尺寸无效或格式不受支持');
+      }
       const c = document.createElement('canvas');
       c.width = img.naturalWidth;
       c.height = img.naturalHeight;

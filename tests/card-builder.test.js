@@ -50,16 +50,29 @@ describe('CardSourceItem', () => {
     expect(nonWhite).toBeGreaterThan(0);
   });
 
-  it('renders image element onto canvas', () => {
-    const img = fakeImage(10, 10);
+  it('renders image element onto canvas (pixels appear at expected region)', () => {
+    // Create a colored source image so we can detect it in the output.
+    const src = document.createElement('canvas');
+    src.width = 10; src.height = 10;
+    const sctx = src.getContext('2d');
+    sctx.fillStyle = '#ff0000';
+    sctx.fillRect(0, 0, 10, 10);
+
     const item = new CardSourceItem(
       { w: 50, h: 50 }, 350,
-      [{ type: 'image', id: 'i1', src: img, x: 10, y: 10, w: 20, h: 20 }]
+      [{ type: 'image', id: 'i1', src, x: 5, y: 5, w: 20, h: 20 }]
     );
-    expect(item.canvas.width).toBeGreaterThan(0);
-    // The drawn image area should be non-pure-white (drawn image is empty white too,
-    // but at least the render call succeeded without throwing).
-    expect(() => item.canvas.getContext('2d').getImageData(0, 0, 1, 1)).not.toThrow();
+    const ctx = item.canvas.getContext('2d');
+    // Sample the expected image region in pixel coords.
+    const dpi = 350;
+    const mmToPx = dpi / 25.4;
+    const px = Math.round(10 * mmToPx);
+    const py = Math.round(10 * mmToPx);
+    const data = ctx.getImageData(px, py, 1, 1).data;
+    // Should be red (255, 0, 0).
+    expect(data[0]).toBe(255);
+    expect(data[1]).toBe(0);
+    expect(data[2]).toBe(0);
   });
 
   it('renders an empty elements list as a white canvas', () => {
