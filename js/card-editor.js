@@ -38,7 +38,15 @@ export function initCardEditor(els) {
   els.selectSize.value = DEFAULT_CARD_SIZE;
 
   els.selectSize.addEventListener('change', () => {
-    els.customRow.hidden = els.selectSize.value !== '自定义';
+    const sel = els.selectSize.value;
+    const preset = CARD_SIZES[sel];
+    // Sync w/h inputs to the preset so the user can switch to 自定义
+    // and tweak from that baseline.
+    if (preset) {
+      els.cardW.value = String(preset.w);
+      els.cardH.value = String(preset.h);
+    }
+    els.customRow.hidden = sel !== '自定义';
     rebuildSourceItems();
   });
   els.cardW.addEventListener('input', () => debounced(rebuildSourceItems));
