@@ -191,17 +191,22 @@ export function initCardEditor(els) {
     if (phase !== 'designing') return;
     const cardSize = getCardSize();
     const dpi = els.getState().dpi;
-    // Render at dpi but size display to fit a max on-screen dimension.
+    // Source canvas at full dpi.
     const item = new CardSourceItem(cardSize, dpi, elements);
     const srcW = item.canvas.width;
     const srcH = item.canvas.height;
-    const maxDisplayPx = 360;
+
+    // Display: fit container width (max 800px) while preserving card aspect.
+    const container = els.cardCanvas.parentElement;
+    const containerW = container ? container.clientWidth : 600;
+    const maxDisplayPx = Math.min(800, Math.max(280, containerW - 32));
     const scale = Math.min(maxDisplayPx / srcW, maxDisplayPx / srcH);
     const dw = srcW * scale;
     const dh = srcH * scale;
+
     const dpr = window.devicePixelRatio || 1;
-    els.cardCanvas.width  = dw * dpr;
-    els.cardCanvas.height = dh * dpr;
+    els.cardCanvas.width  = Math.max(1, Math.round(dw * dpr));
+    els.cardCanvas.height = Math.max(1, Math.round(dh * dpr));
     els.cardCanvas.style.width  = `${dw}px`;
     els.cardCanvas.style.height = `${dh}px`;
     const ctx = els.cardCanvas.getContext('2d');
@@ -209,7 +214,6 @@ export function initCardEditor(els) {
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, dw, dh);
     ctx.drawImage(item.canvas, 0, 0, dw, dh);
-    // Draw selection marker on top.
     drawSelectionOverlay(ctx, scale);
   }
 
@@ -393,7 +397,10 @@ export function initCardEditor(els) {
 
   return {
     /** Force the designer to redraw (e.g. after size change from outside). */
-    redraw() { drawDesigner(); },
+    redraw() {
+      els.setPhase('designing');
+      drawDesigner();
+    },
     /** Clear all elements (used on reupload of photo mode that affects card). */
     reset() {
       elements = [];

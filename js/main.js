@@ -378,8 +378,7 @@ createModeTab({
       if (cropperWrapper.isActive()) cropperWrapper.destroy();
       state.drawing = 'once';
       setStatus('READY');
-      // Enter designing phase by default; the user clicks
-      // "完成设计" to switch to arranging.
+      // Enter designing phase (also makes card canvas visible).
       cardEditor.redraw();
       return;
     }
@@ -399,8 +398,6 @@ window.addEventListener('unhandledrejection', (e) => {
 
 // ---------- Initial render ----------
 showSectionsFor(state.status);
-// Default the card tab to designing phase.
-dom.designPhase.hidden = false;
-dom.arrangePhase.hidden = true;
-showCardCanvas(false);
 refresh();
+// Default the card tab to designing phase (drives canvas visibility too).
+cardEditor.redraw();
