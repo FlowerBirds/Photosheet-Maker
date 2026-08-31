@@ -318,6 +318,23 @@ const photoSections = [dom.uploadSection, dom.cropSection];
 const cardSections  = [dom.cardSection];
 
 // createModeTab attaches listeners to the tab buttons (its side effect).
+// Note: cardEditor is referenced inside onSwitch, so it must be declared
+// before this call.
+const cardEditor = initCardEditor({
+  selectSize: dom.selectCardSize,
+  customRow:  dom.customCardSize,
+  cardW: dom.cardW, cardH: dom.cardH,
+  fieldsRoot: dom.cardFields,
+  btnAdd: dom.btnAddField,
+  dataArea: dom.cardData,
+  rowCount: dom.cardRowCount,
+  imgInput: dom.cardImageInput,
+  btnRemoveImg: dom.btnRemoveCardImg,
+  getState: () => ({ mode: state.mode, paperSize: state.paperSize, dpi: state.dpi }),
+  setSourceItems: (items) => { state.sourceItems = items; },
+  requestRefresh: refresh,
+});
+
 createModeTab({
   photoBtn: dom.tabPhoto,
   cardBtn:  dom.tabCard,
@@ -344,24 +361,13 @@ createModeTab({
       if (cropperWrapper.isActive()) cropperWrapper.destroy();
       state.drawing = 'once';
       setStatus('READY');
+      // Build initial source items so the preview shows paper + slots
+      // immediately, even before the user types any batch data.
+      cardEditor.rebuild();
+      return; // rebuild() already called requestRefresh
     }
     refresh();
   },
-});
-
-initCardEditor({
-  selectSize: dom.selectCardSize,
-  customRow:  dom.customCardSize,
-  cardW: dom.cardW, cardH: dom.cardH,
-  fieldsRoot: dom.cardFields,
-  btnAdd: dom.btnAddField,
-  dataArea: dom.cardData,
-  rowCount: dom.cardRowCount,
-  imgInput: dom.cardImageInput,
-  btnRemoveImg: dom.btnRemoveCardImg,
-  getState: () => ({ mode: state.mode, paperSize: state.paperSize, dpi: state.dpi }),
-  setSourceItems: (items) => { state.sourceItems = items; },
-  requestRefresh: refresh,
 });
 
 // ---------- Global error handlers ----------

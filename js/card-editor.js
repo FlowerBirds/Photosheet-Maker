@@ -199,3 +199,12 @@ function escapeHtml(s) {
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
   }[c]));
 }
+
+// ---- public API ----
+// Returned so callers (e.g. main.js on mode switch) can force a rebuild
+// even when no editor change has occurred.
+return {
+  rebuild() {
+    rebuildSourceItems();
+  },
+};
