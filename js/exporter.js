@@ -12,6 +12,7 @@ import { drawCropMarks } from './crop-marks.js';
  *   drawing: 'repeat'|'once',
  *   zoom?: number,                // photo mode only
  *   showCropMarks?: boolean,      // ignored in 'once' mode
+ *   showFooter?: boolean,
  *   format: 'jpeg'|'png',
  * }} params
  * @param {Record<string,{w:number,h:number}>} paperMap
@@ -20,7 +21,7 @@ import { drawCropMarks } from './crop-marks.js';
 export async function exportImage(params, paperMap) {
   const {
     sourceItems, paperSize, dpi, margin, gap,
-    zoom = 1, showCropMarks = true, format,
+    drawing, zoom = 1, showCropMarks = true, showFooter = true, format,
   } = params;
   if (!sourceItems || sourceItems.length === 0) {
     throw new Error('没有可导出的内容');
@@ -76,17 +77,19 @@ export async function exportImage(params, paperMap) {
     drawCropMarks(ctx, layout, sourceSize, mmToPx, zoom);
   }
 
-  // Footer.
-  const fontSize = Math.max(10, mmToPx * 2.5);
-  ctx.fillStyle = '#999999';
-  ctx.font = `${fontSize}px -apple-system, "Segoe UI", sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'bottom';
-  ctx.fillText(
-    `github.com/FlowerBirds/Photosheet-Maker • ${zoom.toFixed(2)}×`,
-    canvasW / 2,
-    canvasH - 1 * mmToPx
-  );
+  // Footer (opt-in; default ON).
+  if (showFooter) {
+    const fontSize = Math.max(10, mmToPx * 2.5);
+    ctx.fillStyle = '#999999';
+    ctx.font = `${fontSize}px -apple-system, "Segoe UI", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(
+      `github.com/FlowerBirds/Photosheet-Maker • ${zoom.toFixed(2)}×`,
+      canvasW / 2,
+      canvasH - 1 * mmToPx
+    );
+  }
 
   const mime = format === 'png' ? 'image/png' : 'image/jpeg';
   const quality = format === 'png' ? undefined : 0.95;

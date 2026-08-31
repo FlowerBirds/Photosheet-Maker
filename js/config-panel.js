@@ -1,6 +1,6 @@
 import {
   PHOTO_SIZES, PAPER_SIZES, DPI_OPTIONS,
-  DEFAULT_MARGIN, DEFAULT_GAP, DEFAULT_ZOOM, DEFAULT_SHOW_CROP_MARKS,
+  DEFAULT_MARGIN, DEFAULT_GAP, DEFAULT_ZOOM, DEFAULT_SHOW_CROP_MARKS, DEFAULT_SHOW_FOOTER,
 } from './constants.js';
 
 /**
@@ -52,6 +52,7 @@ function bindSlider(input, mirror) {
  *   gapV: HTMLInputElement, gapVVal: HTMLElement,
  *   zoom: HTMLInputElement, zoomVal: HTMLElement,
  *   showCropMarks: HTMLInputElement,
+ *   showFooter: HTMLInputElement,
  * }} els
  * @param {(patch: object) => void} onChange   - called with a partial state patch
  */
@@ -79,6 +80,7 @@ export function initConfigPanel(els, onChange) {
   els.gapV.value         = DEFAULT_GAP.v;
   if (els.zoom) els.zoom.value = String(DEFAULT_ZOOM);
   if (els.showCropMarks) els.showCropMarks.checked = DEFAULT_SHOW_CROP_MARKS;
+  if (els.showFooter) els.showFooter.checked = DEFAULT_SHOW_FOOTER;
 
   // Wire each slider to its mirror span. `bindSlider` runs the initial
   // sync itself, so the displayed value reflects the defaults immediately.
@@ -139,6 +141,13 @@ export function initConfigPanel(els, onChange) {
   if (els.showCropMarks) {
     els.showCropMarks.addEventListener('change', () => onChange({
       showCropMarks: els.showCropMarks.checked,
+    }));
+  }
+
+  // Footer toggle: dispatch immediately (no debounce).
+  if (els.showFooter) {
+    els.showFooter.addEventListener('change', () => onChange({
+      showFooter: els.showFooter.checked,
     }));
   }
 }

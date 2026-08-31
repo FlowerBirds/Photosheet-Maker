@@ -62,6 +62,7 @@ const state = {
   zoom: 1,        // per-photo zoom multiplier; does NOT affect layout
   rotation: 0,    // cumulative rotation in degrees (mod 360)
   showCropMarks: true,
+  showFooter: true,
   sourceItems: [],     // current SourceItem[] (length 1 in photo, N in card)
   drawing: 'repeat',   // 'repeat' for photo, 'once' for card
   mode: 'PHOTO',       // 'PHOTO' | 'CARD'
@@ -131,6 +132,7 @@ function refresh() {
     drawing: st.drawing,
     zoom: st.zoom,
     showCropMarks: st.showCropMarks,
+    showFooter: st.showFooter,
   };
   const layout = renderPreview(dom.preview, params, PAPER_SIZES, st.sourceItems);
   if (!layout) {
@@ -264,6 +266,7 @@ initConfigPanel(
     gapV:         $('gap-v'),         gapVVal:         $('gap-v-val'),
     zoom:         $('zoom'),          zoomVal:         $('zoom-val'),
     showCropMarks: $('show-crop-marks'),
+  showFooter: $('show-footer'),
   },
   (patch) => {
     // If photoSize changed, update Cropper aspect ratio (if active).
@@ -310,6 +313,7 @@ dom.btnExport.addEventListener('click', async () => {
         drawing: state.drawing,
         zoom: state.zoom,
         showCropMarks: state.showCropMarks,
+        showFooter: state.showFooter,
         format,
       },
       PAPER_SIZES

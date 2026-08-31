@@ -17,6 +17,7 @@ const WRAPPER_PADDING_PX    = 32;  // 16px each side (matches .preview-wrapper)
  *   drawing: 'repeat'|'once',     // photo mode = 'repeat', card mode = 'once'
  *   zoom?: number,                // per-photo zoom (photo mode only)
  *   showCropMarks?: boolean,
+ *   showFooter?: boolean,
  * }} params
  * @param {Record<string,{w:number,h:number}>} paperMap
  * @param {import('./source-item.js').SourceItem[]} sourceItems
@@ -81,17 +82,19 @@ export function renderPreview(canvas, params, paperMap, sourceItems) {
     drawCropMarks(ctx, layout, sourceSize, scale, zoom);
   }
 
-  // Footer.
-  const fontSize = Math.max(10, scale * 3);
-  ctx.fillStyle = '#999999';
-  ctx.font = `${fontSize}px -apple-system, "Segoe UI", sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'bottom';
-  ctx.fillText(
-    `github.com/FlowerBirds/Photosheet-Maker • ${zoom.toFixed(2)}×`,
-    displayW / 2,
-    displayH - 4
-  );
+  // Footer (opt-in; default ON).
+  if (params.showFooter !== false) {
+    const fontSize = Math.max(10, scale * 3);
+    ctx.fillStyle = '#999999';
+    ctx.font = `${fontSize}px -apple-system, "Segoe UI", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(
+      `github.com/FlowerBirds/Photosheet-Maker • ${zoom.toFixed(2)}×`,
+      displayW / 2,
+      displayH - 4
+    );
+  }
 
   return layout;
 }

@@ -46,6 +46,9 @@ export const ZOOM_STEP    = 0.01;
 // Show crop marks (角标) in preview and export. Toggleable in UI.
 export const DEFAULT_SHOW_CROP_MARKS = true;
 
+// Show bottom watermark ("github.com/... • Nx") in preview and export.
+export const DEFAULT_SHOW_FOOTER = true;
+
 // ---------- Card maker ----------
 
 // Card size presets (mm). 6寸系列按"6寸相纸可裁切"组织:
