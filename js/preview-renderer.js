@@ -11,31 +11,27 @@ const WRAPPER_PADDING_PX    = 32;  // 16px each side (matches .preview-wrapper)
  *
  * @param {HTMLCanvasElement} canvas
  * @param {{
- *   photoSize: string, paperSize: string,
+ *   paperSize: string,
  *   margin: {top:number,bottom:number,left:number,right:number},
  *   gap:    {h:number, v:number},
- *   rotation?: number,
+ *   drawing: 'repeat'|'once',     // photo mode = 'repeat', card mode = 'once'
+ *   zoom?: number,                // per-photo zoom (photo mode only)
+ *   showCropMarks?: boolean,
  * }} params
- * @param {Record<string,{w:number,h:number}>} photoMap
  * @param {Record<string,{w:number,h:number}>} paperMap
- * @param {HTMLCanvasElement|null} croppedCanvas - the cropped source image
+ * @param {import('./source-item.js').SourceItem[]} sourceItems
  */
-export function renderPreview(canvas, params, photoMap, paperMap, croppedCanvas) {
+export function renderPreview(canvas, params, paperMap, sourceItems) {
   const ctx = canvas.getContext('2d');
-  const photoBase = photoMap[params.photoSize];
+  if (!sourceItems || sourceItems.length === 0) {
+    clearCanvas(canvas);
+    return null;
+  }
+  const sourceSize = sourceItems[0].size;
   const paper = paperMap[params.paperSize];
-  if (!photoBase || !paper) return;
+  if (!paper) return null;
 
-  // Account for rotation: a 90°/270° rotation swaps width and height.
-  const rotation = params.rotation || 0;
-  const photo = rotation % 180 === 0 ? photoBase : { w: photoBase.h, h: photoBase.w };
-
-  // Compute the largest scale that fits the preview within the available
-  // space without stretching. Strategy differs by viewport:
-  //   - Desktop (≥768px): width-first at PREVIEW_MAX_WIDTH_PX, with a tall
-  //     height cap so A4/3A still renders large.
-  //   - Mobile:  width = container width, height = 70vh (prevents
-  //     stretching on narrow screens).
+  // Preview scaling (unchanged).
   const container = canvas.parentElement;
   const containerW = container ? container.clientWidth : window.innerWidth;
   const isDesktop = window.innerWidth >= 768;
@@ -49,7 +45,6 @@ export function renderPreview(canvas, params, photoMap, paperMap, croppedCanvas)
   const displayW = paper.w * scale;
   const displayH = paper.h * scale;
 
-  // Size the canvas (use devicePixelRatio for crisp rendering).
   const dpr = window.devicePixelRatio || 1;
   canvas.width  = displayW * dpr;
   canvas.height = displayH * dpr;
@@ -57,42 +52,26 @@ export function renderPreview(canvas, params, photoMap, paperMap, croppedCanvas)
   canvas.style.height = `${displayH}px`;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  // Clear & paint background.
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, displayW, displayH);
 
-  // Compute layout in mm → convert to px.
-  const layout = calculateLayout(photo, paper, params.margin, params.gap);
-
-  // Per-photo zoom — does NOT affect layout positions, only draw size.
+  const layout = calculateLayout(sourceSize, paper, params.margin, params.gap);
   const zoom = params.zoom || 1;
-  const drawW = photo.w * zoom;
-  const drawH = photo.h * zoom;
+  const drawW = sourceSize.w * zoom;
+  const drawH = sourceSize.h * zoom;
 
-  if (croppedCanvas) {
-    for (const pos of layout.positions) {
-      ctx.drawImage(
-        croppedCanvas,
-        pos.x * scale,
-        pos.y * scale,
-        drawW * scale,
-        drawH * scale
-      );
-    }
-    // Crop marks are opt-in via the toggle in settings.
-    if (params.showCropMarks !== false) {
-      drawCropMarks(ctx, layout, photo, scale, zoom);
-    }
-  } else {
-    // Fallback placeholder if no cropped canvas yet.
-    ctx.fillStyle = '#e0e0e0';
-    for (const pos of layout.positions) {
-      ctx.fillRect(pos.x * scale, pos.y * scale, drawW * scale, drawH * scale);
-    }
+  sourceItems.forEach((item, i) => {
+    const pos = layout.positions[i];
+    if (!pos) return; // 'once' mode: stop when positions exhausted
+    ctx.drawImage(item.canvas, pos.x * scale, pos.y * scale, drawW * scale, drawH * scale);
+  });
+
+  // Crop marks only for photo (repeat) mode; cards ignore them.
+  if (params.drawing === 'repeat' && params.showCropMarks !== false) {
+    drawCropMarks(ctx, layout, sourceSize, scale, zoom);
   }
 
-  // Footer: single centered line with repo URL + zoom, separated by a bullet.
-  // Small and faint — purely informational.
+  // Footer.
   const fontSize = Math.max(10, scale * 3);
   ctx.fillStyle = '#999999';
   ctx.font = `${fontSize}px -apple-system, "Segoe UI", sans-serif`;
@@ -105,4 +84,9 @@ export function renderPreview(canvas, params, photoMap, paperMap, croppedCanvas)
   );
 
   return layout;
+}
+
+function clearCanvas(canvas) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
