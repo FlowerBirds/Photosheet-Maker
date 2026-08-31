@@ -45,3 +45,31 @@ export const ZOOM_STEP    = 0.01;
 
 // Show crop marks (角标) in preview and export. Toggleable in UI.
 export const DEFAULT_SHOW_CROP_MARKS = true;
+
+// ---------- Card maker ----------
+
+// Card size presets (mm).
+export const CARD_SIZES = {
+  '一寸':   { w: 25, h: 35 },
+  '二寸':   { w: 35, h: 49 },
+  '自定义': { w: 90, h: 54 }, // user-editable; default like a business card
+};
+export const DEFAULT_CARD_SIZE = '一寸';
+
+// Font-size presets for card text fields (ratio of card height).
+export const CARD_FONT_SIZE_RATIO = { big: 0.12, mid: 0.07, small: 0.05 };
+
+// Maximum per-card canvas resolution (px on longer side). Above this we
+// scale the effective render dpi down uniformly for the whole batch.
+export const CARD_MAX_PX = 1500;
+
+// Default text color for new fields.
+export const DEFAULT_FIELD_COLOR = '#222222';
+
+// Default field list shown when user opens Card tab the first time.
+export const CARD_FIELD_DEFAULTS = [
+  { id: 'title', label: '标题', enabled: true,  default: '欢迎', size: 'big',   color: DEFAULT_FIELD_COLOR },
+  { id: 'name',  label: '姓名', enabled: true,  default: '',     size: 'mid',   color: DEFAULT_FIELD_COLOR },
+  { id: 'id',    label: '编号', enabled: true,  default: '',     size: 'small', color: DEFAULT_FIELD_COLOR },
+  { id: 'note',  label: '备注', enabled: false, default: '',     size: 'small', color: DEFAULT_FIELD_COLOR },
+];
