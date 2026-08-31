@@ -375,6 +375,11 @@ button { font: inherit; }
   border-radius: 4px;
   font-size: 12px;
 }
+.element-row .aspect-toggle {
+  padding: 1px 6px;
+  font-size: 12px;
+  line-height: 1;
+}
 
 /* Visually-hidden but still in layout (so .click() works on file inputs). */
 .visually-hidden {

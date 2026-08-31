@@ -107,6 +107,8 @@ export function initCardEditor(els) {
         x: (cardSize.w - w) / 2,
         y: (cardSize.h - h) / 2,
         w, h,
+        aspectLocked: true,
+        _aspect: w / h,
       });
       selectedId = id;
       renderElementList();
@@ -346,12 +348,41 @@ export function initCardEditor(els) {
       }
 
       if (el.type === 'image') {
-        // Width / height inputs (mm).
+        // Width / height inputs (mm). Aspect lock (default true) keeps ratio.
         const dimWrap = document.createElement('span');
         dimWrap.className = 'dim-wrap';
-        const wIn = makeNumberInput('宽', el.w, 1, 200, 0.5, (v) => { el.w = v; drawDesigner(); });
-        const hIn = makeNumberInput('高', el.h, 1, 200, 0.5, (v) => { el.h = v; drawDesigner(); });
+        const aspect = el.w / el.h;  // captured at render time
+        el._aspect = aspect;
+        const lockBtn = document.createElement('button');
+        lockBtn.className = 'btn-secondary aspect-toggle';
+        lockBtn.title = el.aspectLocked
+          ? '已锁定比例（点击解锁）'
+          : '未锁定比例（点击锁定）';
+        lockBtn.textContent = el.aspectLocked ? '🔗' : '🔓';
+        lockBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          el.aspectLocked = !el.aspectLocked;
+          if (el.aspectLocked) {
+            // Re-capture aspect from current values.
+            el._aspect = el.w / el.h || 1;
+          }
+          renderElementList();
+          drawDesigner();
+        });
+        const onW = (v) => {
+          el.w = v;
+          if (el.aspectLocked) el.h = v / el._aspect;
+          drawDesigner();
+        };
+        const onH = (v) => {
+          el.h = v;
+          if (el.aspectLocked) el.w = v * el._aspect;
+          drawDesigner();
+        };
+        const wIn = makeNumberInput('宽', el.w, 1, 200, 0.5, onW);
+        const hIn = makeNumberInput('高', el.h, 1, 200, 0.5, onH);
         dimWrap.appendChild(wIn);
+        dimWrap.appendChild(lockBtn);
         dimWrap.appendChild(hIn);
         row.appendChild(dimWrap);
       }
