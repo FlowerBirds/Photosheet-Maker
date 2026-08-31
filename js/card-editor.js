@@ -88,18 +88,22 @@ export function initCardEditor(els) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     try {
-      const img = await loadImage(file);
+      // loadImage returns an HTMLCanvasElement (not an Image) — read
+      // .width/.height, not .naturalWidth.
+      const canvas = await loadImage(file);
+      const srcW = canvas.width;
+      const srcH = canvas.height;
       const cardSize = getCardSize();
       const id = `e${nextId++}`;
       // Fit-within-card initial size, preserve aspect.
       const maxH = cardSize.h * 0.4;
       const maxW = cardSize.w * 0.6;
-      const scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
-      const w = img.naturalWidth * scale;
-      const h = img.naturalHeight * scale;
+      const scale = Math.min(maxW / srcW, maxH / srcH);
+      const w = srcW * scale;
+      const h = srcH * scale;
       elements.push({
         type: 'image', id,
-        src: img,
+        src: canvas,
         x: (cardSize.w - w) / 2,
         y: (cardSize.h - h) / 2,
         w, h,
