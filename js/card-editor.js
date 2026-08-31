@@ -123,6 +123,17 @@ export function initCardEditor(els) {
   els.cardCanvas.addEventListener('pointermove', onCanvasPointerMove);
   els.cardCanvas.addEventListener('pointerup', onCanvasPointerUp);
   els.cardCanvas.addEventListener('pointercancel', onCanvasPointerUp);
+  els.cardCanvas.addEventListener('mousemove', (e) => {
+    if (dragOffset) {
+      els.cardCanvas.style.cursor = 'grabbing';
+      return;
+    }
+    const el = hitTest(e);
+    els.cardCanvas.style.cursor = el ? 'grab' : 'crosshair';
+  });
+  els.cardCanvas.addEventListener('mouseleave', () => {
+    if (!dragOffset) els.cardCanvas.style.cursor = 'crosshair';
+  });
   // Deselect on background click (not on an element).
   els.cardCanvas.addEventListener('click', (e) => {
     if (e.target === els.cardCanvas) {
@@ -207,20 +218,45 @@ export function initCardEditor(els) {
     const el = elements.find(e => e.id === selectedId);
     if (!el) return;
     ctx.save();
+    const box = elementBoxMm(el);
+    const x = box.x * scale - 3;
+    const y = box.y * scale - 3;
+    const w = box.w * scale + 6;
+    const h = box.h * scale + 6;
+    // Solid blue border — visible.
     ctx.strokeStyle = '#2d7ff9';
     ctx.lineWidth = 2;
-    ctx.setLineDash([4, 3]);
-    if (el.type === 'text') {
-      // Approximate bounding box from text width.
-      const fontPx = el.fontSize * (els.getState().dpi / 25.4) * scale;
-      ctx.font = `${fontPx}px -apple-system, "Segoe UI", sans-serif`;
-      const textW = ctx.measureText(el.text || '').width;
-      const textH = fontPx * 1.2;
-      ctx.strokeRect(el.x * scale - 2, el.y * scale - 2, textW + 4, textH + 4);
-    } else {
-      ctx.strokeRect(el.x * scale - 2, el.y * scale - 2, el.w * scale + 4, el.h * scale + 4);
-    }
+    ctx.setLineDash([]);
+    ctx.strokeRect(x, y, w, h);
+    // Corner handles (4 small filled squares).
+    ctx.fillStyle = '#2d7ff9';
+    const hs = 6;
+    const corners = [
+      [x - hs / 2, y - hs / 2],
+      [x + w - hs / 2, y - hs / 2],
+      [x - hs / 2, y + h - hs / 2],
+      [x + w - hs / 2, y + h - hs / 2],
+    ];
+    for (const [cx, cy] of corners) ctx.fillRect(cx, cy, hs, hs);
     ctx.restore();
+  }
+
+  /**
+   * Element bounding box in mm (used for hit-testing and overlay).
+   * Text: top-left is (x, y); width = measured text width / mmToPx; height = fontSize.
+   * Image: top-left is (x, y); size is (w, h).
+   */
+  function elementBoxMm(el) {
+    if (el.type === 'image') return { x: el.x, y: el.y, w: el.w, h: el.h };
+    // Text: top-left at (x, y); measure width and height (1.2 line-height) using
+    // the same font as the renderer so the hit area matches the visual box.
+    const dpi = els.getState().dpi;
+    const mmToPx = dpi / 25.4;
+    const fontPx = el.fontSize * mmToPx;
+    const ctx = els.cardCanvas.getContext('2d');
+    ctx.font = `${fontPx}px -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif`;
+    const textW = ctx.measureText(el.text || '').width;
+    return { x: el.x, y: el.y, w: textW / mmToPx, h: el.fontSize * 1.2 };
   }
 
   function renderElementList() {
@@ -327,14 +363,9 @@ export function initCardEditor(els) {
     // Iterate from last to first (top z-order first).
     for (let i = elements.length - 1; i >= 0; i--) {
       const el = elements[i];
-      if (el.type === 'image') {
-        if (mmX >= el.x && mmX <= el.x + el.w &&
-            mmY >= el.y && mmY <= el.y + el.h) return el;
-      } else {
-        // For text, hit-test a small rect around (x, y).
-        if (mmX >= el.x && mmX <= el.x + 30 &&
-            mmY >= el.y - el.fontSize && mmY <= el.y + el.fontSize) return el;
-      }
+      const box = elementBoxMm(el);
+      if (mmX >= box.x && mmX <= box.x + box.w &&
+          mmY >= box.y && mmY <= box.y + box.h) return el;
     }
     return null;
   }
