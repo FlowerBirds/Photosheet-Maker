@@ -68,6 +68,26 @@ button { font: inherit; }
   margin: 0;
 }
 
+/* Orientation radio row. */
+.orient-row {
+  display: flex;
+  gap: 14px;
+  margin: 4px 0 8px;
+}
+.orient-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+}
+.orient-label input[type="radio"] {
+  width: 14px; height: 14px;
+  accent-color: #2d7ff9;
+  cursor: pointer;
+}
+
 /* ---------- Container (mobile-first: column) ---------- */
 .container {
   display: flex;

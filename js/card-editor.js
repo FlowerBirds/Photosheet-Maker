@@ -25,7 +25,6 @@ const DEFAULT_FONT_SIZE_MM = 5;  // mm — reasonable starting size for new text
  *   btnRedesign:  HTMLButtonElement,
  *   cardBorderWidth: HTMLInputElement,
  *   cardBorderColor: HTMLInputElement,
- *   btnToggleOrient:  HTMLButtonElement,
  *   // Card size controls (shared with arrange phase)
  *   selectSize:   HTMLSelectElement,
  *   customRow:    HTMLElement,
@@ -54,18 +53,43 @@ export function initCardEditor(els) {
   let selectedId = null;            // currently selected element id
   let nextId = 1;
   let dragOffset = null;            // { dx, dy } in mm during drag
-  let cardOrientation = 'portrait'; // 'portrait' | 'landscape' (tracked separately from preset label)
   // Card-level border. Default: 0.1mm gray (~1px at 350dpi).
   const border = { width: 0.1, color: '#888888' };
+
+  /** Read the currently-selected orientation radio ('portrait' | 'landscape'). */
+  function getOrientation() {
+    const r = document.querySelector('input[name="card-orientation"]:checked');
+    return r ? r.value : 'portrait';
+  }
+
+  /** Set orientation radio by value ('portrait' | 'landscape'). */
+  function setOrientation(value) {
+    const r = document.querySelector(`input[name="card-orientation"][value="${value}"]`);
+    if (r) r.checked = true;
+  }
 
   // --- Public init ---
 
   // Wire size select.
   els.selectSize.addEventListener('change', () => {
-    cardOrientation = 'portrait';  // selecting a preset resets orientation
+    setOrientation('portrait');  // selecting a preset resets orientation
     syncSizeInputs();
     if (phase === 'designing') drawDesigner();
     else if (phase === 'arranging') rebuildArrangeItem();
+  });
+
+  // Orientation radios.
+  document.querySelectorAll('input[name="card-orientation"]').forEach((r) => {
+    r.addEventListener('change', () => {
+      if (!r.checked) return;
+      // Reflect into the input boxes (visible only for 自定义 row, but
+      // keeps them in sync with current size).
+      const cur = getCardSize();
+      els.cardW.value = String(cur.w);
+      els.cardH.value = String(cur.h);
+      if (phase === 'designing') drawDesigner();
+      else if (phase === 'arranging') rebuildArrangeItem();
+    });
   });
   els.cardW.addEventListener('input', () => {
     if (phase === 'designing') drawDesigner();
@@ -86,18 +110,8 @@ export function initCardEditor(els) {
     else if (phase === 'arranging') rebuildArrangeItem();
   });
 
-  // Orientation toggle: swap current card width and height without losing the
-// preset selection. Re-picking the same preset resets to its default portrait.
-  els.btnToggleOrient.addEventListener('click', () => {
-    cardOrientation = cardOrientation === 'portrait' ? 'landscape' : 'portrait';
-    // Reflect new orientation into the input boxes (only visible for 自定义
-    // row, but keep them in sync for clarity).
-    const cur = getCardSize();
-    els.cardW.value = String(cur.w);
-    els.cardH.value = String(cur.h);
-    if (phase === 'designing') drawDesigner();
-    else if (phase === 'arranging') rebuildArrangeItem();
-  });
+  // Orientation radios are wired above (after selectSize change handler).
+// (Removed the toggle button in favour of explicit portrait/landscape radios.)
 
   // Add-text / add-image buttons.
   els.btnAddText.addEventListener('click', () => {
@@ -200,8 +214,8 @@ export function initCardEditor(els) {
     }
     const preset = CARD_SIZES[sel];
     if (!preset) return { w: 90, h: 54 };
-    // Apply current orientation (toggle swaps w/h).
-    return cardOrientation === 'landscape'
+    // Apply current orientation (radios swap w/h).
+    return getOrientation() === 'landscape'
       ? { w: preset.h, h: preset.w }
       : preset;
   }

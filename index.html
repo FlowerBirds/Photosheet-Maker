@@ -129,17 +129,18 @@
       <!-- Card editor (visible only in CARD mode) -->
       <section class="card" id="card-editor-section" hidden>
         <h2>卡片尺寸</h2>
-        <div class="size-row">
-          <label>预设
-            <select id="select-card-size"></select>
+        <label>预设
+          <select id="select-card-size"></select>
+        </label>
+        <div class="orient-row">
+          <label class="orient-label">
+            <input type="radio" name="card-orientation" value="portrait" checked />
+            <span>纵向</span>
           </label>
-          <button id="btn-toggle-orientation" class="btn-icon" title="切换横版 / 纵版">
-            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
-              <rect x="2" y="5" width="9" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/>
-              <rect x="9" y="5" width="9" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M5 10 L13 10 M11 8 L13 10 L11 12" fill="none" stroke="currentColor" stroke-width="1.5"/>
-            </svg>
-          </button>
+          <label class="orient-label">
+            <input type="radio" name="card-orientation" value="landscape" />
+            <span>横向</span>
+          </label>
         </div>
         <div class="custom-size-row" id="custom-card-size" hidden>
           <label>宽 (mm)<input type="number" id="card-w" min="5" max="500" value="90" /></label>

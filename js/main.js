@@ -47,7 +47,6 @@ const dom = {
   btnRedesign:       $('btn-redesign'),
   cardBorderWidth:   $('card-border-width'),
   cardBorderColor:   $('card-border-color'),
-  btnToggleOrient:   $('btn-toggle-orientation'),
 };
 
 // ---------- State ----------
@@ -351,7 +350,6 @@ const cardEditor = initCardEditor({
   cardH:        dom.cardH,
   cardBorderWidth: dom.cardBorderWidth,
   cardBorderColor: dom.cardBorderColor,
-  btnToggleOrient:  dom.btnToggleOrient,
   getState:     () => ({ paperSize: state.paperSize, dpi: state.dpi }),
   setSourceItems: (items) => { state.sourceItems = items; },
   setPhase: (phase) => {
