@@ -75,11 +75,23 @@ export class SourceItem {
                   │
                   ▼
   ┌──── preview-renderer / exporter ────┐
-  │ 遍历 positions，drawImage(items[i%n])│
+  │ 按模式遍历绘制 SourceItem           │
   └─────────────────────────────────────┘
 ```
 
 layout-engine 只看 `size`（mm）和 `canvas`，不感知内容来源。
+
+### 绘制语义：重复 vs 单次（关键区分）
+
+**证件照模式（单个 item）：** 同一个 `PhotoSourceItem` 填满相纸的所有 layout 位置——**每个位置重复绘制同一张源图**。
+
+**卡片模式（多个 item）：** 每个 `CardSourceItem` **只出现一次**，按 layout 位置顺序依次摆放，不循环。
+
+- `layout.positions[i]` 对应 `sourceItems[i]`（i < sourceItems.length）
+- 若 `sourceItems.length < positions.length`：剩余位置**留空**（不绘制、不循环补位）
+- 若 `sourceItems.length > positions.length`：超出的卡片**不被排版**，导出不包含
+
+两个模式共用同一套 `SourceItem[]` 数据结构，由 `mode` 决定采用"重复"还是"单次"语义。
 
 ---
 
@@ -104,17 +116,20 @@ layout-engine 只看 `size`（mm）和 `canvas`，不感知内容来源。
 - 卡片尺寸（下拉：1寸 25×35 / 2寸 35×49 / 自定义 w×h mm）
 - ① 字段配置（多组：标题/姓名/编号/备注/电话…；每组：启用勾选 + 标签 + 默认值 + 字号 + 颜色）
 - ② 批量数据（多行 CSV，每行一张卡；空字段用默认值；实时显示"将生成 N 张卡"）
-- ③ 图片（可选；居中嵌入；自动按卡片尺寸等比缩放）
+- ③ 图片（可选；**所有卡片共用同一张嵌入图**，居中、自动按卡片尺寸等比缩放；不提供每卡一图）
 - ④ 排版设置（**共用同一组**）
 
 预览 canvas 与导出按钮两种模式共用。
+
+**裁剪线（crop-marks）：** 卡片是设计好的成品，**卡片模式强制关闭裁剪线**（忽略 `showCropMarks` 设置），避免在成品卡四周画出矩形角标。证件照模式保持现有行为。
 
 ### 模式切换实现
 
 新增 `js/mode-tab.js`：
 - 维护 `mode: 'PHOTO' | 'CARD'`
-- 切到卡片模式：销毁 cropper，重置 croppedCanvas
-- 切到证件照模式：还原照片状态
+- 切到卡片模式：**销毁 cropper 实例**（保留 `croppedCanvas` 与 `originalImage`）
+- 切到证件照模式：**恢复已有状态**——若 `croppedCanvas` 存在则直接回到 READY；若仅上传未裁剪，则重新初始化 cropper 回 CROPPING；否则回 INITIAL
+- **切换不丢失裁剪结果**：`croppedCanvas`、`originalImage`、`rotation` 跨模式保留，避免来回切换需反复重新裁剪
 - 状态机 `INITIAL / CROPPING / READY / EXPORTING` 保持不变；卡片模式跳过 CROPPING 直接进入 READY
 
 ---
@@ -124,17 +139,20 @@ layout-engine 只看 `size`（mm）和 `canvas`，不感知内容来源。
 ### 字段配置 UI
 
 ```
-┌──────────────────────────────────────────┐
-│ 字段配置                       [＋]      │
-├──────────────────────────────────────────┤
-│ [✓] 标题  默认值: __________ 字号:[大▼] │
-│ [✓] 姓名  默认值: __________              │
-│ [✓] 编号  默认值: __________              │
-│ [✓] 备注  默认值: __________              │
-│ [ ] 电话  默认值: __________              │
-│                              [删]         │
-└──────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│ 字段配置                       [＋]          │
+├──────────────────────────────────────────────┤
+│ [✓] 标题  默认值: ________ 字号:[大▼] [↑][↓]│
+│ [✓] 姓名  默认值: ________              [↑][↓]│
+│ [✓] 编号  默认值: ________              [↑][↓]│
+│ [✓] 备注  默认值: ________              [↑][↓]│
+│ [ ] 电话  默认值: ________              [↑][↓]│
+│                                        [删]  │
+└──────────────────────────────────────────────┘
 ```
+
+- 每行右侧 `[↑][↓]`：调整字段顺序 = 调整 CSV 列顺序（本版本用上下箭头按钮，不做拖拽手柄）
+- `[＋]` 追加字段，`[删]` 删除当前字段行
 
 ### 批量数据输入
 
@@ -151,7 +169,10 @@ layout-engine 只看 `size`（mm）和 `canvas`，不感知内容来源。
 └──────────────────────────────────────────────────┘
 ```
 
-### 渲染时序
+**列数匹配规则：** 字段顺序 = CSV 列顺序。解析每一行时：
+- 某字段在行内无对应列（行内列数不足）→ 该字段用默认值
+- 行内列数超出字段数 → 多余列忽略
+- 空行跳过，不计入生成卡片数
 
 编辑器任何变更 → 重新解析数据行 → 重新渲染所有 `CardSourceItem.canvas` → 触发 preview-renderer 重绘。**debounce 200ms**。
 
@@ -173,7 +194,20 @@ render(ctx, fields, rowValues, imageCanvas) {
 }
 ```
 
-字号三档：大（卡片高 × 0.12）/ 中（×0.07）/ 小（×0.05），常量定义在 `constants.js` 的 `CARD_FONT_SIZE_RATIO`。**单卡渲染分辨率上限 1500×1500 px**（避免一次渲染过多卡时内存爆掉；超过则按比例降低 dpi）。
+字号三档：大（卡片高 × 0.12）/ 中（×0.07）/ 小（×0.05），常量定义在 `constants.js` 的 `CARD_FONT_SIZE_RATIO`。
+
+**卡片 canvas 分辨率（关键）：** 每张卡片的 `canvas` 按"**卡片 mm × 目标 dpi**"生成，与相纸导出 dpi 一致。
+
+```
+canvasW = round(card.w * dpi / 25.4)
+canvasH = round(card.h * dpi / 25.4)
+```
+
+- `dpi` 取当前设置的输出 DPI（350 / 300 / 150 / 600）
+- 导出时该卡片以 **1:1 原尺寸** `drawImage` 到对应位置，无需缩放，避免缩采样失真
+- 内存保护：单卡分辨率上限 **1500×1500 px**。若某张卡按目标 dpi 计算超出上限，则整批卡统一降为 `1500 / max(card.w, card.h) × 25.4` dpi（取整），保证所有卡分辨率一致、按同一 dpi 放置时比例正确。所有卡使用**同一 dpi 常量**，不可每卡不同。
+
+> 注：卡片尺寸 25×35mm 在 600dpi 下约 591×827px，正常范围内不会触顶；上限主要防御超大自定义尺寸。
 
 ---
 
@@ -186,21 +220,25 @@ render(ctx, fields, rowValues, imageCanvas) {
 ### `renderPreview(canvas, params, paperMap, sourceItems)`
 
 - 不再需要 `photoMap`（size 取自 `sourceItems[0].size`）
-- 内部循环改为 `sourceItems[i % sourceItems.length]`
+- 内部按**绘制语义**遍历（见 §3）：
+  - 证件照模式：对每个 position 重复绘制 `sourceItems[0]`
+  - 卡片模式：`sourceItems[i]` 只放一次，`i >= sourceItems.length` 的位置留空
 
 ### `exportImage` 同上
 
-接受 `sourceItems`，遍历绘制。
+接受 `sourceItems`，按同样语义遍历绘制。
 
 ### info-panel 文案
 
 - 证件照：`容纳 N 张 · 输出 W×H px @ DPI`
 - 卡片：`共 N 张卡 · 容纳 M 张/相纸 · 输出 W×H px @ DPI`
-- `M = layout.count`；`N = sourceItems.length`
+- `M = layout.count`（相纸能容纳的位置数）；`N = sourceItems.length`（卡片数）
 
-### 错误处理
+### 错误处理与边界
 
-字段全部禁用 / 数据为空 → 禁用导出按钮 + 提示"请至少启用一个字段并填写数据"。
+1. 字段全部禁用 / 数据为空 → 禁用导出按钮 + 提示"请至少启用一个字段并填写数据"
+2. **卡片数 N > 相纸容纳数 M**：导出按钮不阻塞（用户可能本就只想排前 M 张），但 info-panel 追加警告"有 N−M 张卡超出相纸容纳范围，未排版"。同时提供快捷跳转到"卡片尺寸/相纸尺寸"设置的提示。
+3. **卡片数 N < 相纸容纳数 M**：剩余位置留空，无警告。
 
 ---
 
@@ -233,7 +271,8 @@ render(ctx, fields, rowValues, imageCanvas) {
 | 文件 | 用途 |
 |---|---|
 | `tests/source-item.test.js` | PhotoSourceItem.size 正确 |
-| `tests/card-builder.test.js` | 字段 + 数据行渲染输出尺寸正确、文字存在 |
+| `tests/card-builder.test.js` | 字段 + 数据行渲染输出尺寸正确、文字存在；canvas 分辨率 = 卡片 mm × dpi |
+| `tests/card-parser.test.js` | 批量数据解析：列数不足用默认值、列数超出忽略、空行跳过 |
 | `tests/layout-engine.test.js` | 增加"接收任意 size"用例 |
 
 ---
@@ -245,7 +284,7 @@ render(ctx, fields, rowValues, imageCanvas) {
 | layout-engine 算法改动 | 现有测试覆盖；算法不变，只是参数名变化 |
 | preview-renderer / exporter 是数据关键点 | 端到端手动验证两模式 |
 | 模式切换让状态机复杂 | 两模式独立状态路径，不共享中间态 |
-| Canvas 性能（多张高 DPI 卡） | 单卡渲染分辨率限制在 600dpi 上限 |
+| Canvas 性能（多张高 DPI 卡） | 单卡分辨率上限 1500×1500 px；超限按比例统一降 dpi（见 §5） |
 
 ---
 
