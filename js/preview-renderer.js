@@ -60,11 +60,21 @@ export function renderPreview(canvas, params, paperMap, sourceItems) {
   const drawW = sourceSize.w * zoom;
   const drawH = sourceSize.h * zoom;
 
-  sourceItems.forEach((item, i) => {
-    const pos = layout.positions[i];
-    if (!pos) return; // 'once' mode: stop when positions exhausted
-    ctx.drawImage(item.canvas, pos.x * scale, pos.y * scale, drawW * scale, drawH * scale);
-  });
+  if (params.drawing === 'repeat') {
+    // Photo / card-template mode: cycle the source items to fill every position.
+    for (let i = 0; i < layout.positions.length; i++) {
+      const item = sourceItems[i % sourceItems.length];
+      const pos = layout.positions[i];
+      ctx.drawImage(item.canvas, pos.x * scale, pos.y * scale, drawW * scale, drawH * scale);
+    }
+  } else {
+    // 'once' mode: each item at most once.
+    sourceItems.forEach((item, i) => {
+      const pos = layout.positions[i];
+      if (!pos) return;
+      ctx.drawImage(item.canvas, pos.x * scale, pos.y * scale, drawW * scale, drawH * scale);
+    });
+  }
 
   // Crop marks: shared toggle across both modes. Cards always pass zoom=1.
   if (params.showCropMarks !== false) {

@@ -44,17 +44,32 @@ export async function exportImage(params, paperMap) {
   const drawW = sourceSize.w * zoom;
   const drawH = sourceSize.h * zoom;
 
-  sourceItems.forEach((item, i) => {
-    const pos = layout.positions[i];
-    if (!pos) return;
-    ctx.drawImage(
-      item.canvas,
-      Math.round(pos.x * mmToPx),
-      Math.round(pos.y * mmToPx),
-      Math.round(drawW * mmToPx),
-      Math.round(drawH * mmToPx)
-    );
-  });
+  if (drawing === 'repeat') {
+    // Photo / card-template mode: cycle source items to fill every position.
+    for (let i = 0; i < layout.positions.length; i++) {
+      const item = sourceItems[i % sourceItems.length];
+      const pos = layout.positions[i];
+      ctx.drawImage(
+        item.canvas,
+        Math.round(pos.x * mmToPx),
+        Math.round(pos.y * mmToPx),
+        Math.round(drawW * mmToPx),
+        Math.round(drawH * mmToPx)
+      );
+    }
+  } else {
+    sourceItems.forEach((item, i) => {
+      const pos = layout.positions[i];
+      if (!pos) return;
+      ctx.drawImage(
+        item.canvas,
+        Math.round(pos.x * mmToPx),
+        Math.round(pos.y * mmToPx),
+        Math.round(drawW * mmToPx),
+        Math.round(drawH * mmToPx)
+      );
+    });
+  }
 
   // Crop marks: shared toggle across both modes. Cards always pass zoom=1.
   if (showCropMarks) {

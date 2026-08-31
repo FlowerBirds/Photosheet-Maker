@@ -376,7 +376,7 @@ createModeTab({
     } else {
       // CARD mode: destroy any active cropper, jump straight to READY.
       if (cropperWrapper.isActive()) cropperWrapper.destroy();
-      state.drawing = 'once';
+      state.drawing = 'repeat';  // single CardSourceItem is repeated to fill paper
       setStatus('READY');
       // Enter designing phase (also makes card canvas visible).
       cardEditor.redraw();
