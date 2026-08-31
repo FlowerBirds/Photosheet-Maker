@@ -40,6 +40,34 @@ button { font: inherit; }
 }
 .btn-secondary:hover { background: #f0f0f0; }
 
+/* Compact icon button (e.g. orientation toggle). */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px; height: 30px;
+  padding: 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  color: #555;
+  cursor: pointer;
+}
+.btn-icon:hover { background: #f0f0f0; color: #2d7ff9; }
+.btn-icon svg { display: block; }
+
+/* Size-row: preset dropdown + orientation toggle on one line. */
+.size-row {
+  display: flex;
+  align-items: end;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.size-row label {
+  flex: 1;
+  margin: 0;
+}
+
 /* ---------- Container (mobile-first: column) ---------- */
 .container {
   display: flex;

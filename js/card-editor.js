@@ -83,18 +83,14 @@ export function initCardEditor(els) {
     else if (phase === 'arranging') rebuildArrangeItem();
   });
 
-  // Orientation toggle: swap current card width and height.
+  // Orientation toggle: swap current card width and height without losing the
+// preset selection. Re-picking the same preset resets to its default portrait.
   els.btnToggleOrient.addEventListener('click', () => {
     const cur = getCardSize();
-    const swapped = { w: cur.h, h: cur.w };
-    // Apply swapped values to inputs.
-    els.cardW.value = String(swapped.w);
-    els.cardH.value = String(swapped.h);
-    // If on a named preset (not 自定义), keep it selected but the swapped
-    // values will not match the preset until user re-picks. Use 自定义 so
-    // the inputs reflect the actual swapped values.
-    els.selectSize.value = '自定义';
-    els.customRow.hidden = false;
+    els.cardW.value = String(cur.h);
+    els.cardH.value = String(cur.w);
+    // For 自定义, keep the input row visible (it already is). For named
+    // presets, swap the dimensions but keep the dropdown label.
     if (phase === 'designing') drawDesigner();
     else if (phase === 'arranging') rebuildArrangeItem();
   });
