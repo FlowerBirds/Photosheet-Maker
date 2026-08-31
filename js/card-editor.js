@@ -54,6 +54,7 @@ export function initCardEditor(els) {
   let selectedId = null;            // currently selected element id
   let nextId = 1;
   let dragOffset = null;            // { dx, dy } in mm during drag
+  let cardOrientation = 'portrait'; // 'portrait' | 'landscape' (tracked separately from preset label)
   // Card-level border. Default: 0.1mm gray (~1px at 350dpi).
   const border = { width: 0.1, color: '#888888' };
 
@@ -61,8 +62,10 @@ export function initCardEditor(els) {
 
   // Wire size select.
   els.selectSize.addEventListener('change', () => {
+    cardOrientation = 'portrait';  // selecting a preset resets orientation
     syncSizeInputs();
     if (phase === 'designing') drawDesigner();
+    else if (phase === 'arranging') rebuildArrangeItem();
   });
   els.cardW.addEventListener('input', () => {
     if (phase === 'designing') drawDesigner();
@@ -86,11 +89,12 @@ export function initCardEditor(els) {
   // Orientation toggle: swap current card width and height without losing the
 // preset selection. Re-picking the same preset resets to its default portrait.
   els.btnToggleOrient.addEventListener('click', () => {
+    cardOrientation = cardOrientation === 'portrait' ? 'landscape' : 'portrait';
+    // Reflect new orientation into the input boxes (only visible for 自定义
+    // row, but keep them in sync for clarity).
     const cur = getCardSize();
-    els.cardW.value = String(cur.h);
-    els.cardH.value = String(cur.w);
-    // For 自定义, keep the input row visible (it already is). For named
-    // presets, swap the dimensions but keep the dropdown label.
+    els.cardW.value = String(cur.w);
+    els.cardH.value = String(cur.h);
     if (phase === 'designing') drawDesigner();
     else if (phase === 'arranging') rebuildArrangeItem();
   });
@@ -188,11 +192,18 @@ export function initCardEditor(els) {
 
   function getCardSize() {
     const sel = els.selectSize.value;
-    if (sel !== '自定义') return CARD_SIZES[sel];
-    return {
-      w: Math.max(5, Number(els.cardW.value) || 90),
-      h: Math.max(5, Number(els.cardH.value) || 54),
-    };
+    if (sel === '自定义') {
+      return {
+        w: Math.max(5, Number(els.cardW.value) || 90),
+        h: Math.max(5, Number(els.cardH.value) || 54),
+      };
+    }
+    const preset = CARD_SIZES[sel];
+    if (!preset) return { w: 90, h: 54 };
+    // Apply current orientation (toggle swaps w/h).
+    return cardOrientation === 'landscape'
+      ? { w: preset.h, h: preset.w }
+      : preset;
   }
 
   function syncSizeInputs() {
