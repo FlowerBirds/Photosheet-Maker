@@ -4,6 +4,9 @@ import { createCropperWrapper } from './cropper-wrapper.js';
 import { initConfigPanel } from './config-panel.js';
 import { renderPreview } from './preview-renderer.js';
 import { exportImage } from './exporter.js';
+import { PhotoSourceItem } from './source-item.js';
+import { createModeTab } from './mode-tab.js';
+import { initCardEditor } from './card-editor.js';
 
 // ---------- DOM refs ----------
 const $ = (id) => document.getElementById(id);
@@ -24,6 +27,21 @@ const dom = {
   infoSize:      $('info-size'),
   infoWarning:   $('info-warning'),
   toast:         $('toast'),
+  // mode tabs
+  tabPhoto:      $('tab-photo'),
+  tabCard:       $('tab-card'),
+  // card section
+  cardSection:       $('card-editor-section'),
+  selectCardSize:    $('select-card-size'),
+  customCardSize:    $('custom-card-size'),
+  cardW:             $('card-w'),
+  cardH:             $('card-h'),
+  cardFields:        $('card-fields'),
+  btnAddField:       $('btn-add-field'),
+  cardData:          $('card-data'),
+  cardRowCount:      $('card-row-count'),
+  cardImageInput:    $('card-image-input'),
+  btnRemoveCardImg:  $('btn-remove-card-image'),
 };
 
 // ---------- State ----------
@@ -39,18 +57,17 @@ const state = {
   zoom: 1,        // per-photo zoom multiplier; does NOT affect layout
   rotation: 0,    // cumulative rotation in degrees (mod 360)
   showCropMarks: true,
+  sourceItems: [],     // current SourceItem[] (length 1 in photo, N in card)
+  drawing: 'repeat',   // 'repeat' for photo, 'once' for card
+  mode: 'PHOTO',       // 'PHOTO' | 'CARD'
 };
 
 const cropperWrapper = createCropperWrapper(dom.cropImage);
 
 // ---------- Helpers ----------
-/**
- * Return the photo size after accounting for cumulative rotation.
- * Rotating 90° or 270° swaps width and height (横竖互换).
- */
-function getEffectivePhotoSize(photoSize, rotation) {
-  const photo = PHOTO_SIZES[photoSize];
-  return rotation % 180 === 0 ? photo : { w: photo.h, h: photo.w };
+function rebuildPhotoSource() {
+  if (!state.croppedCanvas) { state.sourceItems = []; return; }
+  state.sourceItems = [new PhotoSourceItem(state.croppedCanvas, state.photoSize, { rotation: state.rotation })];
 }
 
 // ---------- Toast ----------
@@ -64,11 +81,14 @@ function toast(msg, ms = 3000) {
 
 // ---------- Visibility helpers ----------
 function showSectionsFor(status) {
-  dom.uploadSection.hidden = status !== 'INITIAL';
-  dom.cropSection.hidden   = status === 'INITIAL';
-  dom.settings.hidden      = status === 'INITIAL';
-  dom.btnReupload.hidden   = status === 'INITIAL';
-  dom.btnRecrop.hidden     = status !== 'READY';
+  // Only photo sections follow status; card section is controlled by tab.
+  if (state.mode === 'PHOTO') {
+    dom.uploadSection.hidden = status !== 'INITIAL';
+    dom.cropSection.hidden   = status === 'INITIAL';
+    dom.settings.hidden      = status === 'INITIAL';
+    dom.btnReupload.hidden   = status === 'INITIAL';
+    dom.btnRecrop.hidden     = status !== 'READY';
+  }
 }
 
 // ---------- State transitions ----------
@@ -84,40 +104,67 @@ function setState(patch) {
 
 // ---------- Refresh (recalculate + redraw) ----------
 function refresh() {
-  if (state.status === 'READY' || state.status === 'CROPPING') {
-    const effectiveSize = getEffectivePhotoSize(state.photoSize, state.rotation);
-    const layout = renderPreview(
-      dom.preview,
-      {
-        photoSize: state.photoSize,
-        paperSize: state.paperSize,
-        margin: state.margin,
-        gap: state.gap,
-        rotation: state.rotation,
-        zoom: state.zoom,
-        showCropMarks: state.showCropMarks,
-      },
-      PHOTO_SIZES, PAPER_SIZES,
-      state.status === 'READY' ? state.croppedCanvas : null
-    );
+  const st = state;
+  if (st.sourceItems.length === 0) {
+    clearInfoPanel();
+    return;
+  }
 
-    if (layout) {
-      dom.infoCount.textContent = layout.count;
-      const paper = PAPER_SIZES[state.paperSize];
-      const w = Math.round(paper.w * state.dpi / 25.4);
-      const h = Math.round(paper.h * state.dpi / 25.4);
-      const orient = effectiveSize.w >= effectiveSize.h ? '横版' : '竖版';
-      dom.infoSize.textContent = `${w} × ${h} px @ ${state.dpi} DPI · ${orient}`;
-      if (layout.count === 0) {
-        dom.infoWarning.textContent = '当前设置无法容纳任何照片，请缩小边距/间距或换大相纸';
-        dom.infoWarning.hidden = false;
-        dom.btnExport.disabled = true;
-      } else {
-        dom.infoWarning.hidden = true;
-        dom.btnExport.disabled = state.status !== 'READY';
-      }
+  const params = {
+    paperSize: st.paperSize,
+    margin: st.margin,
+    gap: st.gap,
+    drawing: st.drawing,
+    zoom: st.zoom,
+    showCropMarks: st.showCropMarks,
+  };
+  const layout = renderPreview(dom.preview, params, PAPER_SIZES, st.sourceItems);
+  if (!layout) {
+    clearInfoPanel();
+    return;
+  }
+
+  const paper = PAPER_SIZES[st.paperSize];
+  const w = Math.round(paper.w * st.dpi / 25.4);
+  const h = Math.round(paper.h * st.dpi / 25.4);
+
+  if (st.drawing === 'repeat') {
+    dom.infoCount.textContent = layout.count;
+    const orient = st.sourceItems[0].size.w >= st.sourceItems[0].size.h ? '横版' : '竖版';
+    dom.infoSize.textContent = `${w} × ${h} px @ ${st.dpi} DPI · ${orient}`;
+    if (layout.count === 0) {
+      dom.infoWarning.textContent = '当前设置无法容纳任何照片，请缩小边距/间距或换大相纸';
+      dom.infoWarning.hidden = false;
+      dom.btnExport.disabled = true;
+    } else {
+      dom.infoWarning.hidden = true;
+      dom.btnExport.disabled = st.status !== 'READY';
+    }
+  } else {
+    const n = st.sourceItems.length;
+    const m = layout.count;
+    dom.infoCount.textContent = `${n} 张 / ${m} 容纳`;
+    dom.infoSize.textContent = `${w} × ${h} px @ ${st.dpi} DPI`;
+    if (n === 0) {
+      dom.infoWarning.textContent = '请至少启用一个字段并填写数据';
+      dom.infoWarning.hidden = false;
+      dom.btnExport.disabled = true;
+    } else if (n > m) {
+      dom.infoWarning.textContent = `有 ${n - m} 张卡超出相纸容纳范围，未排版`;
+      dom.infoWarning.hidden = false;
+      dom.btnExport.disabled = false;
+    } else {
+      dom.infoWarning.hidden = true;
+      dom.btnExport.disabled = false;
     }
   }
+}
+
+function clearInfoPanel() {
+  dom.infoCount.textContent = '—';
+  dom.infoSize.textContent  = '—';
+  dom.infoWarning.hidden = true;
+  dom.btnExport.disabled = true;
 }
 
 // ---------- Uploader wiring ----------
@@ -175,6 +222,7 @@ dom.btnFinishCrop.addEventListener('click', () => {
   state.croppedCanvas = canvas;
   cropperWrapper.destroy();
   setStatus('READY');
+  rebuildPhotoSource();
   refresh();
   toast('裁剪完成，已进入排版阶段');
 });
@@ -211,6 +259,10 @@ initConfigPanel(
       cropperWrapper.setAspectRatio(w / h);
     }
     setState(patch);
+    if (patch.photoSize !== undefined || patch.rotation !== undefined) {
+      rebuildPhotoSource();
+      refresh();
+    }
   }
 );
 
@@ -220,39 +272,93 @@ dom.btnReupload.addEventListener('click', () => {
   state.originalImage = null;
   state.croppedCanvas = null;
   state.rotation = 0;
+  state.sourceItems = [];
   dom.fileInput.value = '';
   setStatus('INITIAL');
+  refresh();
 });
 
 dom.btnExport.addEventListener('click', async () => {
-  if (!state.croppedCanvas) return;
+  if (state.sourceItems.length === 0) return;
   const choice = window.confirm('确定导出？\n确定 = JPG（较小）\n取消 = PNG（无损）');
   const format = choice ? 'jpeg' : 'png';
+  const prevStatus = state.status;
   setStatus('EXPORTING');
   dom.btnExport.disabled = true;
   try {
     await exportImage(
       {
-        croppedCanvas: state.croppedCanvas,
-        photoSize: state.photoSize,
+        sourceItems: state.sourceItems,
         paperSize: state.paperSize,
         dpi: state.dpi,
         margin: state.margin,
         gap: state.gap,
-        rotation: state.rotation,
+        drawing: state.drawing,
         zoom: state.zoom,
         showCropMarks: state.showCropMarks,
         format,
       },
-      PHOTO_SIZES, PAPER_SIZES
+      PAPER_SIZES
     );
     toast('已生成图片，请检查下载');
   } catch (err) {
     toast(err.message);
   } finally {
-    setStatus('READY');
+    setStatus(prevStatus === 'EXPORTING' ? 'READY' : prevStatus);
     refresh();
   }
+});
+
+// ---------- Mode tab ----------
+const photoSections = [dom.uploadSection, dom.cropSection, dom.settings];
+const cardSections  = [dom.cardSection];
+
+// modeTab's side effects attach to the buttons; we don't need to call its
+// methods from main.js today, but keep the binding available for future use.
+const modeTab = createModeTab({
+  photoBtn: dom.tabPhoto,
+  cardBtn:  dom.tabCard,
+  photoSections,
+  cardSections,
+  onSwitch: (newMode) => {
+    state.mode = newMode;
+    if (newMode === 'PHOTO') {
+      // Restore photo cropper if needed.
+      if (state.originalImage && !state.croppedCanvas && !cropperWrapper.isActive()) {
+        dom.cropImage.src = state.originalImage.src;
+        const photo = PHOTO_SIZES[state.photoSize];
+        cropperWrapper.init({ aspectRatio: photo.w / photo.h });
+        setStatus('CROPPING');
+      } else if (state.croppedCanvas) {
+        setStatus('READY');
+      } else {
+        setStatus('INITIAL');
+      }
+      state.drawing = 'repeat';
+      rebuildPhotoSource();
+    } else {
+      // CARD mode: destroy any active cropper, jump straight to READY.
+      if (cropperWrapper.isActive()) cropperWrapper.destroy();
+      state.drawing = 'once';
+      setStatus('READY');
+    }
+    refresh();
+  },
+});
+
+initCardEditor({
+  selectSize: dom.selectCardSize,
+  customRow:  dom.customCardSize,
+  cardW: dom.cardW, cardH: dom.cardH,
+  fieldsRoot: dom.cardFields,
+  btnAdd: dom.btnAddField,
+  dataArea: dom.cardData,
+  rowCount: dom.cardRowCount,
+  imgInput: dom.cardImageInput,
+  btnRemoveImg: dom.btnRemoveCardImg,
+  getState: () => ({ mode: state.mode, paperSize: state.paperSize, dpi: state.dpi }),
+  setSourceItems: (items) => { state.sourceItems = items; },
+  requestRefresh: refresh,
 });
 
 // ---------- Global error handlers ----------
