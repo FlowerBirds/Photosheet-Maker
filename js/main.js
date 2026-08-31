@@ -81,13 +81,16 @@ function toast(msg, ms = 3000) {
 
 // ---------- Visibility helpers ----------
 function showSectionsFor(status) {
-  // Only photo sections follow status; card section is controlled by tab.
+  // Photo sections follow status; settings is shared (always shown outside PHOTO/INITIAL).
   if (state.mode === 'PHOTO') {
     dom.uploadSection.hidden = status !== 'INITIAL';
     dom.cropSection.hidden   = status === 'INITIAL';
     dom.settings.hidden      = status === 'INITIAL';
     dom.btnReupload.hidden   = status === 'INITIAL';
     dom.btnRecrop.hidden     = status !== 'READY';
+  } else {
+    // CARD mode: settings is always visible.
+    dom.settings.hidden = false;
   }
 }
 
@@ -310,7 +313,8 @@ dom.btnExport.addEventListener('click', async () => {
 });
 
 // ---------- Mode tab ----------
-const photoSections = [dom.uploadSection, dom.cropSection, dom.settings];
+// settings-section is shared between both modes (paper size, DPI, margin, gap).
+const photoSections = [dom.uploadSection, dom.cropSection];
 const cardSections  = [dom.cardSection];
 
 // createModeTab attaches listeners to the tab buttons (its side effect).
