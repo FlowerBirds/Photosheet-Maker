@@ -185,6 +185,15 @@ export function initCardEditor(els) {
     // Re-join row values in field order to feed CardSourceItem.
     return Object.keys(row).sort((a,b)=>Number(a)-Number(b)).map(k => row[k]).join(',');
   }
+
+  // ---- public API ----
+  // Returned so callers (e.g. main.js on mode switch) can force a rebuild
+  // even when no editor change has occurred.
+  return {
+    rebuild() {
+      rebuildSourceItems();
+    },
+  };
 }
 
 // ---- debounce ----
@@ -199,12 +208,3 @@ function escapeHtml(s) {
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
   }[c]));
 }
-
-// ---- public API ----
-// Returned so callers (e.g. main.js on mode switch) can force a rebuild
-// even when no editor change has occurred.
-return {
-  rebuild() {
-    rebuildSourceItems();
-  },
-};
