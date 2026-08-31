@@ -25,6 +25,7 @@ const DEFAULT_FONT_SIZE_MM = 5;  // mm — reasonable starting size for new text
  *   btnRedesign:  HTMLButtonElement,
  *   cardBorderWidth: HTMLInputElement,
  *   cardBorderColor: HTMLInputElement,
+ *   btnToggleOrient:  HTMLButtonElement,
  *   // Card size controls (shared with arrange phase)
  *   selectSize:   HTMLSelectElement,
  *   customRow:    HTMLElement,
@@ -78,6 +79,22 @@ export function initCardEditor(els) {
   });
   els.cardBorderColor.addEventListener('input', () => {
     border.color = els.cardBorderColor.value || '#888888';
+    if (phase === 'designing') drawDesigner();
+    else if (phase === 'arranging') rebuildArrangeItem();
+  });
+
+  // Orientation toggle: swap current card width and height.
+  els.btnToggleOrient.addEventListener('click', () => {
+    const cur = getCardSize();
+    const swapped = { w: cur.h, h: cur.w };
+    // Apply swapped values to inputs.
+    els.cardW.value = String(swapped.w);
+    els.cardH.value = String(swapped.h);
+    // If on a named preset (not 自定义), keep it selected but the swapped
+    // values will not match the preset until user re-picks. Use 自定义 so
+    // the inputs reflect the actual swapped values.
+    els.selectSize.value = '自定义';
+    els.customRow.hidden = false;
     if (phase === 'designing') drawDesigner();
     else if (phase === 'arranging') rebuildArrangeItem();
   });
