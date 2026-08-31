@@ -121,7 +121,7 @@ layout-engine 只看 `size`（mm）和 `canvas`，不感知内容来源。
 
 预览 canvas 与导出按钮两种模式共用。
 
-**裁剪线（crop-marks）：** 卡片是设计好的成品，**卡片模式强制关闭裁剪线**（忽略 `showCropMarks` 设置），避免在成品卡四周画出矩形角标。证件照模式保持现有行为。
+**裁剪线（crop-marks）：** 两种模式都画。`drawCropMarks` 复用现有实现（基于 layout.positions 画 L 形角标），由顶部"裁剪线"开关统一控制——开启即画，关闭即不画。卡片模式 zoom 默认为 1，角标按卡片实际边界画出。
 
 ### 模式切换实现
 
@@ -285,6 +285,7 @@ canvasH = round(card.h * dpi / 25.4)
 | preview-renderer / exporter 是数据关键点 | 端到端手动验证两模式 |
 | 模式切换让状态机复杂 | 两模式独立状态路径，不共享中间态 |
 | Canvas 性能（多张高 DPI 卡） | 单卡分辨率上限 1500×1500 px；超限按比例统一降 dpi（见 §5） |
+| 卡片也画裁剪线 | drawCropMarks 通用，按 layout.positions 循环；卡片 zoom=1，角标按卡片边界 |
 
 ---
 
