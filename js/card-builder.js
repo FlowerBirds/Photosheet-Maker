@@ -1,5 +1,5 @@
 import { SourceItem } from './source-item.js';
-import { CARD_FONT_SIZE_RATIO, CARD_MAX_PX, DEFAULT_FIELD_COLOR } from './constants.js';
+import { CARD_MAX_PX, DEFAULT_FIELD_COLOR } from './constants.js';
 
 /**
  * Compute the effective render dpi for a batch of cards.
@@ -19,35 +19,28 @@ export function computeCardDpi(cardSize, requestedDpi) {
 }
 
 /**
- * Take a free image (canvas) and produce a centered, fit-within-card
- * copy at the target size. Returns the same canvas (no shared refs
- * mutation; the renderer scales to fit at draw time).
- *
- * @param {HTMLCanvasElement} src
- * @param {{w:number, h:number}} _cardSize  - mm (reserved for future use)
- * @returns {HTMLCanvasElement}
+ * Take a free image (canvas) and pass it through. Kept for API symmetry
+ * with the old design; the renderer scales to fit at draw time.
  */
 export function createCardImageSource(src, _cardSize) {
   return src;
 }
 
 /**
- * A single designed card.
+ * A single designed card template. Repeated across the paper.
  * Renders eagerly on construction; `.canvas` is reused on every access.
  */
 export class CardSourceItem extends SourceItem {
   /**
    * @param {{w:number, h:number}} cardSize          - mm
    * @param {number} requestedDpi
-   * @param {Array<{id:string,label:string,enabled:boolean,default:string,size:string,color:string}>} fields
-   * @param {string} row                             - CSV row string for this card
-   * @param {HTMLCanvasElement|null} imageCanvas     - shared embedded image (or null)
+   * @param {Array} elements                         - ElementText | ElementImage
    */
-  constructor(cardSize, requestedDpi, fields, row, imageCanvas) {
+  constructor(cardSize, requestedDpi, elements) {
     super();
     this._size = cardSize;
     this._dpi  = computeCardDpi(cardSize, requestedDpi);
-    this._canvas = renderCardCanvas(cardSize, this._dpi, fields, row, imageCanvas);
+    this._canvas = renderCardCanvas(cardSize, this._dpi, elements);
   }
 
   get size()   { return this._size; }
@@ -55,10 +48,12 @@ export class CardSourceItem extends SourceItem {
 }
 
 /**
- * Render one card to a fresh canvas at the given dpi.
+ * Render one card to a fresh canvas at the given dpi. Elements are drawn
+ * in array order (z-order: later = on top). Coordinate units are mm.
+ *
  * @returns {HTMLCanvasElement}
  */
-function renderCardCanvas(cardSize, dpi, fields, row, imageCanvas) {
+function renderCardCanvas(cardSize, dpi, elements) {
   const w = Math.round(cardSize.w * dpi / 25.4);
   const h = Math.round(cardSize.h * dpi / 25.4);
   const c = document.createElement('canvas');
@@ -69,61 +64,21 @@ function renderCardCanvas(cardSize, dpi, fields, row, imageCanvas) {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, w, h);
 
-  // Embedded image (centered, fit-within-card, preserve aspect).
-  if (imageCanvas) {
-    drawImageCentered(ctx, imageCanvas, w, h);
+  const mmToPx = dpi / 25.4;
+
+  for (const el of elements) {
+    if (el.type === 'text') {
+      const fontPx = Math.max(6, el.fontSize * mmToPx);
+      ctx.font = `${fontPx}px -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif`;
+      ctx.fillStyle = el.color || DEFAULT_FIELD_COLOR;
+      ctx.textBaseline = 'top';
+      ctx.fillText(el.text || '', el.x * mmToPx, el.y * mmToPx);
+    } else if (el.type === 'image' && el.src) {
+      const dw = el.w * mmToPx;
+      const dh = el.h * mmToPx;
+      ctx.drawImage(el.src, el.x * mmToPx, el.y * mmToPx, dw, dh);
+    }
   }
 
-  // Parse row into keyed-by-column-index record.
-  const cols = parseRow(row);
-
-  // Vertical flow layout for text fields. Each enabled field gets an
-  // equal slice of the available height — simple, predictable.
-  const marginY = h * 0.06;
-  const usableH = h - marginY * 2;
-  const enabled = fields
-    .map((f, idx) => ({ ...f, colIndex: idx }))
-    .filter(f => f.enabled);
-  const lineH = enabled.length > 0 ? usableH / enabled.length : 0;
-
-  ctx.textBaseline = 'middle';
-  ctx.textAlign = 'center';
-
-  enabled.forEach((field, i) => {
-    const text = cols[`__c${field.colIndex}`] ?? field.default ?? '';
-    if (!text) return;
-    const ratio = CARD_FONT_SIZE_RATIO[field.size] ?? CARD_FONT_SIZE_RATIO.mid;
-    const fontPx = Math.max(6, h * ratio);
-    ctx.font = `${fontPx}px -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif`;
-    ctx.fillStyle = field.color || DEFAULT_FIELD_COLOR;
-    ctx.fillText(text, w / 2, marginY + lineH * (i + 0.5));
-  });
-
   return c;
-}
-
-/**
- * Lightweight CSV row splitter. Supports simple comma splits; does NOT
- * handle quoted fields with embedded commas (out of scope for v1).
- * @param {string} row
- * @returns {Record<string,string>}
- */
-function parseRow(row) {
-  if (typeof row !== 'string') return {};
-  const parts = row.split(',').map(s => s.trim());
-  const out = {};
-  parts.forEach((p, i) => { out[`__c${i}`] = p; });
-  return out;
-}
-
-function drawImageCentered(ctx, img, cardW, cardH) {
-  const margin = Math.min(cardW, cardH) * 0.08;
-  const boxW = cardW - margin * 2;
-  const boxH = cardH * 0.4; // image occupies upper portion
-  const scale = Math.min(boxW / img.width, boxH / img.height);
-  const dw = img.width * scale;
-  const dh = img.height * scale;
-  const dx = (cardW - dw) / 2;
-  const dy = margin;
-  ctx.drawImage(img, dx, dy, dw, dh);
 }

@@ -23,6 +23,7 @@ const dom = {
   btnRotateR:    $('btn-rotate-right'),
   btnFinishCrop: $('btn-finish-crop'),
   preview:       $('preview-canvas'),
+  cardCanvas:    $('card-canvas'),
   infoCount:     $('info-count'),
   infoSize:      $('info-size'),
   infoWarning:   $('info-warning'),
@@ -36,12 +37,14 @@ const dom = {
   customCardSize:    $('custom-card-size'),
   cardW:             $('card-w'),
   cardH:             $('card-h'),
-  cardFields:        $('card-fields'),
-  btnAddField:       $('btn-add-field'),
-  cardData:          $('card-data'),
-  cardRowCount:      $('card-row-count'),
-  cardImageInput:    $('card-image-input'),
-  btnRemoveCardImg:  $('btn-remove-card-image'),
+  designPhase:       $('card-design-phase'),
+  arrangePhase:      $('card-arrange-phase'),
+  btnAddText:        $('btn-add-text'),
+  btnAddImage:       $('btn-add-image'),
+  imageInput:        $('card-image-input'),
+  elementList:       $('card-element-list'),
+  btnComplete:       $('btn-complete-design'),
+  btnRedesign:       $('btn-redesign'),
 };
 
 // ---------- State ----------
@@ -92,6 +95,12 @@ function showSectionsFor(status) {
     // CARD mode: settings is always visible.
     dom.settings.hidden = false;
   }
+}
+
+/** Show / hide card-canvas vs preview-canvas based on phase. */
+function showCardCanvas(show) {
+  dom.cardCanvas.hidden = !show;
+  dom.preview.hidden = show;
 }
 
 // ---------- State transitions ----------
@@ -321,17 +330,25 @@ const cardSections  = [dom.cardSection];
 // Note: cardEditor is referenced inside onSwitch, so it must be declared
 // before this call.
 const cardEditor = initCardEditor({
-  selectSize: dom.selectCardSize,
-  customRow:  dom.customCardSize,
-  cardW: dom.cardW, cardH: dom.cardH,
-  fieldsRoot: dom.cardFields,
-  btnAdd: dom.btnAddField,
-  dataArea: dom.cardData,
-  rowCount: dom.cardRowCount,
-  imgInput: dom.cardImageInput,
-  btnRemoveImg: dom.btnRemoveCardImg,
-  getState: () => ({ mode: state.mode, paperSize: state.paperSize, dpi: state.dpi }),
+  designPanel:  dom.designPhase,
+  cardCanvas:   dom.cardCanvas,
+  btnAddText:   dom.btnAddText,
+  btnAddImage:  dom.btnAddImage,
+  imageInput:   dom.imageInput,
+  elementList:  dom.elementList,
+  btnComplete:  dom.btnComplete,
+  btnRedesign:  dom.btnRedesign,
+  selectSize:   dom.selectCardSize,
+  customRow:    dom.customCardSize,
+  cardW:        dom.cardW,
+  cardH:        dom.cardH,
+  getState:     () => ({ paperSize: state.paperSize, dpi: state.dpi }),
   setSourceItems: (items) => { state.sourceItems = items; },
+  setPhase: (phase) => {
+    dom.designPhase.hidden  = phase !== 'designing';
+    dom.arrangePhase.hidden = phase !== 'arranging';
+    showCardCanvas(phase === 'designing');
+  },
   requestRefresh: refresh,
 });
 
@@ -361,10 +378,10 @@ createModeTab({
       if (cropperWrapper.isActive()) cropperWrapper.destroy();
       state.drawing = 'once';
       setStatus('READY');
-      // Build initial source items so the preview shows paper + slots
-      // immediately, even before the user types any batch data.
-      cardEditor.rebuild();
-      return; // rebuild() already called requestRefresh
+      // Enter designing phase by default; the user clicks
+      // "完成设计" to switch to arranging.
+      cardEditor.redraw();
+      return;
     }
     refresh();
   },
@@ -382,4 +399,8 @@ window.addEventListener('unhandledrejection', (e) => {
 
 // ---------- Initial render ----------
 showSectionsFor(state.status);
+// Default the card tab to designing phase.
+dom.designPhase.hidden = false;
+dom.arrangePhase.hidden = true;
+showCardCanvas(false);
 refresh();

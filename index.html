@@ -129,19 +129,22 @@
           <label>高 (mm)<input type="number" id="card-h" min="5" max="500" value="54" /></label>
         </div>
 
-        <h2>① 字段配置</h2>
-        <div id="card-fields"></div>
-        <button id="btn-add-field" class="btn-secondary">＋ 增加字段</button>
+        <!-- Design phase -->
+        <div id="card-design-phase">
+          <h2>设计</h2>
+          <div class="card-actions">
+            <button id="btn-add-text"  class="btn-secondary">＋ 添加文本</button>
+            <button id="btn-add-image" class="btn-secondary">＋ 添加图片</button>
+            <input  type="file" id="card-image-input" accept="image/jpeg,image/png,image/webp" hidden />
+          </div>
+          <div id="card-element-list" class="element-list"></div>
+          <button id="btn-complete-design" class="btn-primary">完成设计 →</button>
+        </div>
 
-        <h2>② 批量数据</h2>
-        <p class="hint">每行一张卡，列顺序与上方字段顺序一致；空字段用默认值。</p>
-        <textarea id="card-data" rows="6" placeholder="张三, A001&#10;李四, A002"></textarea>
-        <p class="hint" id="card-row-count">将生成 0 张卡片</p>
-
-        <h2>③ 嵌入图片</h2>
-        <input type="file" id="card-image-input" accept="image/jpeg,image/png,image/webp" />
-        <p class="hint">所有卡片共用此图，居中嵌入。不提供则纯文字。</p>
-        <button id="btn-remove-card-image" class="btn-secondary" hidden>移除图片</button>
+        <!-- Arrange phase -->
+        <div id="card-arrange-phase" hidden>
+          <button id="btn-redesign" class="btn-secondary">← 重新设计</button>
+        </div>
       </section>
     </aside>
 
@@ -149,6 +152,7 @@
     <section class="preview-area">
       <div class="preview-wrapper">
         <canvas id="preview-canvas"></canvas>
+        <canvas id="card-canvas" hidden></canvas>
       </div>
 
       <div class="info-panel" id="info-panel">
