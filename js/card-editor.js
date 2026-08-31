@@ -23,6 +23,8 @@ const DEFAULT_FONT_SIZE_MM = 5;  // mm — reasonable starting size for new text
  *   elementList:  HTMLElement,
  *   btnComplete:  HTMLButtonElement,
  *   btnRedesign:  HTMLButtonElement,
+ *   cardBorderWidth: HTMLInputElement,
+ *   cardBorderColor: HTMLInputElement,
  *   // Card size controls (shared with arrange phase)
  *   selectSize:   HTMLSelectElement,
  *   customRow:    HTMLElement,
@@ -51,6 +53,8 @@ export function initCardEditor(els) {
   let selectedId = null;            // currently selected element id
   let nextId = 1;
   let dragOffset = null;            // { dx, dy } in mm during drag
+  // Card-level border. Default: 1mm gray.
+  const border = { width: 1, color: '#888888' };
 
   // --- Public init ---
 
@@ -64,6 +68,18 @@ export function initCardEditor(els) {
   });
   els.cardH.addEventListener('input', () => {
     if (phase === 'designing') drawDesigner();
+  });
+
+  // Border controls.
+  els.cardBorderWidth.addEventListener('input', () => {
+    border.width = clampBorderWidth(Number(els.cardBorderWidth.value));
+    if (phase === 'designing') drawDesigner();
+    else if (phase === 'arranging') rebuildArrangeItem();
+  });
+  els.cardBorderColor.addEventListener('input', () => {
+    border.color = els.cardBorderColor.value || '#888888';
+    if (phase === 'designing') drawDesigner();
+    else if (phase === 'arranging') rebuildArrangeItem();
   });
 
   // Add-text / add-image buttons.
@@ -181,7 +197,7 @@ export function initCardEditor(els) {
     els.setPhase(next);
     if (next === 'arranging') {
       // Build the source item once; preview/exporter will repeat it.
-      const item = new CardSourceItem(getCardSize(), els.getState().dpi, elements);
+      const item = new CardSourceItem(getCardSize(), els.getState().dpi, elements, border);
       els.setSourceItems([item]);
       els.requestRefresh();
     } else {
@@ -198,7 +214,7 @@ export function initCardEditor(els) {
     const cardSize = getCardSize();
     const dpi = els.getState().dpi;
     // Source canvas at full dpi.
-    const item = new CardSourceItem(cardSize, dpi, elements);
+    const item = new CardSourceItem(cardSize, dpi, elements, border);
     const srcW = item.canvas.width;
     const srcH = item.canvas.height;
 
@@ -271,6 +287,20 @@ export function initCardEditor(els) {
 
   /** Round to 1 decimal place (for cleaner UI). */
   function round1(n) { return Math.round(n * 10) / 10; }
+
+  /** Clamp border width to the valid UI range (0–3 mm). */
+  function clampBorderWidth(v) {
+    if (!Number.isFinite(v)) return 0;
+    return Math.min(3, Math.max(0, v));
+  }
+
+  /** Rebuild the source item for the arrange phase and trigger refresh. */
+  function rebuildArrangeItem() {
+    if (phase !== 'arranging') return;
+    const item = new CardSourceItem(getCardSize(), els.getState().dpi, elements, border);
+    els.setSourceItems([item]);
+    els.requestRefresh();
+  }
 
   function renderElementList() {
     els.elementList.innerHTML = '';

@@ -35,12 +35,13 @@ export class CardSourceItem extends SourceItem {
    * @param {{w:number, h:number}} cardSize          - mm
    * @param {number} requestedDpi
    * @param {Array} elements                         - ElementText | ElementImage
+   * @param {{width:number, color:string}} [border]  - optional card-level border (mm)
    */
-  constructor(cardSize, requestedDpi, elements) {
+  constructor(cardSize, requestedDpi, elements, border) {
     super();
     this._size = cardSize;
     this._dpi  = computeCardDpi(cardSize, requestedDpi);
-    this._canvas = renderCardCanvas(cardSize, this._dpi, elements);
+    this._canvas = renderCardCanvas(cardSize, this._dpi, elements, border);
   }
 
   get size()   { return this._size; }
@@ -53,7 +54,7 @@ export class CardSourceItem extends SourceItem {
  *
  * @returns {HTMLCanvasElement}
  */
-function renderCardCanvas(cardSize, dpi, elements) {
+function renderCardCanvas(cardSize, dpi, elements, border) {
   const w = Math.round(cardSize.w * dpi / 25.4);
   const h = Math.round(cardSize.h * dpi / 25.4);
   const c = document.createElement('canvas');
@@ -78,6 +79,15 @@ function renderCardCanvas(cardSize, dpi, elements) {
       const dh = el.h * mmToPx;
       ctx.drawImage(el.src, el.x * mmToPx, el.y * mmToPx, dw, dh);
     }
+  }
+
+  // Optional card-level border (drawn last, on top of all content).
+  if (border && border.width > 0) {
+    const bw = Math.max(0.5, border.width * mmToPx);
+    ctx.strokeStyle = border.color || '#888888';
+    ctx.lineWidth = bw;
+    // Inset by half the line width so the stroke sits fully inside the canvas.
+    ctx.strokeRect(bw / 2, bw / 2, w - bw, h - bw);
   }
 
   return c;

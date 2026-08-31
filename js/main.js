@@ -45,6 +45,8 @@ const dom = {
   elementList:       $('card-element-list'),
   btnComplete:       $('btn-complete-design'),
   btnRedesign:       $('btn-redesign'),
+  cardBorderWidth:   $('card-border-width'),
+  cardBorderColor:   $('card-border-color'),
 };
 
 // ---------- State ----------
@@ -342,6 +344,8 @@ const cardEditor = initCardEditor({
   customRow:    dom.customCardSize,
   cardW:        dom.cardW,
   cardH:        dom.cardH,
+  cardBorderWidth: dom.cardBorderWidth,
+  cardBorderColor: dom.cardBorderColor,
   getState:     () => ({ paperSize: state.paperSize, dpi: state.dpi }),
   setSourceItems: (items) => { state.sourceItems = items; },
   setPhase: (phase) => {

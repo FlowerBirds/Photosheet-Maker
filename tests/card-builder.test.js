@@ -84,6 +84,35 @@ describe('CardSourceItem', () => {
     expect(data[1]).toBe(255);
     expect(data[2]).toBe(255);
   });
+
+  it('draws a card-level border when provided', () => {
+    const item = new CardSourceItem(
+      { w: 50, h: 50 }, 350, [],
+      { width: 1, color: '#ff0000' }
+    );
+    const ctx = item.canvas.getContext('2d');
+    // Sample top-left area where the border should sit.
+    const data = ctx.getImageData(2, 2, 1, 1).data;
+    // Border is red (255, 0, 0).
+    expect(data[0]).toBeGreaterThan(200);
+    expect(data[1]).toBeLessThan(50);
+    expect(data[2]).toBeLessThan(50);
+  });
+
+  it('skips border when width is 0 or border omitted', () => {
+    const itemNoBorder = new CardSourceItem({ w: 50, h: 50 }, 350, []);
+    const itemZeroBorder = new CardSourceItem({ w: 50, h: 50 }, 350, [], { width: 0, color: '#000' });
+    const ctx1 = itemNoBorder.canvas.getContext('2d');
+    const ctx2 = itemZeroBorder.canvas.getContext('2d');
+    const data1 = ctx1.getImageData(2, 2, 1, 1).data;
+    const data2 = ctx2.getImageData(2, 2, 1, 1).data;
+    // All white.
+    for (const d of [data1, data2]) {
+      expect(d[0]).toBe(255);
+      expect(d[1]).toBe(255);
+      expect(d[2]).toBe(255);
+    }
+  });
 });
 
 describe('createCardImageSource', () => {
