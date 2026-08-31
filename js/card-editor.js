@@ -288,9 +288,35 @@ export function initCardEditor(els) {
       row.appendChild(label);
 
       if (el.type === 'text') {
+        // Font size input (mm).
+        const sizeWrap = document.createElement('span');
+        sizeWrap.className = 'size-wrap';
+        const sizeIn = document.createElement('input');
+        sizeIn.type = 'number';
+        sizeIn.min = '2';
+        sizeIn.max = '40';
+        sizeIn.step = '0.5';
+        sizeIn.value = String(el.fontSize);
+        sizeIn.title = '字号 (mm)';
+        sizeIn.addEventListener('input', () => {
+          const v = Number(sizeIn.value);
+          if (Number.isFinite(v) && v >= 2 && v <= 40) {
+            el.fontSize = v;
+            drawDesigner();
+          }
+        });
+        sizeIn.addEventListener('click', (e) => e.stopPropagation());
+        const unit = document.createElement('span');
+        unit.className = 'unit';
+        unit.textContent = 'mm';
+        sizeWrap.appendChild(sizeIn);
+        sizeWrap.appendChild(unit);
+        row.appendChild(sizeWrap);
+
         const editBtn = document.createElement('button');
         editBtn.className = 'btn-secondary';
         editBtn.textContent = '编辑';
+        editBtn.title = '编辑文本内容';
         editBtn.addEventListener('click', () => beginEditText(el));
         row.appendChild(editBtn);
       }
