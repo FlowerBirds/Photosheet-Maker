@@ -58,3 +58,56 @@ describe('renderPreview — crop marks', () => {
     expect(countBlackPixels(c)).toBe(0);
   });
 });
+
+describe('renderPreview — arrange orientation', () => {
+  it('uses arrangedSize for layout when arrangeOrient differs from item.size', () => {
+    // Item designed landscape (90, 54); arrange portrait → arrangedSize = (54, 90).
+    // 6 寸 paper = (102, 152). usableW = 92, usableH = 142.
+    // cols = floor(94/56) = 1, rows = floor(144/92) = 1.
+    const c = document.createElement('canvas');
+    const item = makeItem(90, 54);
+    const layout = renderPreview(
+      c,
+      { paperSize: '6寸（4R）', margin: { top: 5, bottom: 5, left: 5, right: 5 },
+        gap: { h: 2, v: 2 }, drawing: 'once', showCropMarks: false,
+        arrangeOrient: 'portrait' },
+      PAPER_SIZES,
+      [item]
+    );
+    expect(layout.count).toBe(1);
+    expect(layout.cols).toBe(1);
+    expect(layout.rows).toBe(1);
+  });
+
+  it('uses designedSize when arrangeOrient matches item orientation', () => {
+    // Item portrait (25, 35); arrange portrait → size (25, 35).
+    // 6 寸 (102, 152). cols = floor(94/27) = 3, rows = floor(144/37) = 3.
+    const c = document.createElement('canvas');
+    const item = makeItem(25, 35);
+    const layout = renderPreview(
+      c,
+      { paperSize: '6寸（4R）', margin: { top: 5, bottom: 5, left: 5, right: 5 },
+        gap: { h: 2, v: 2 }, drawing: 'once', showCropMarks: false,
+        arrangeOrient: 'portrait' },
+      PAPER_SIZES,
+      [item]
+    );
+    expect(layout.count).toBe(9);
+  });
+
+  it('arrangeOrient landscape on landscape item: no swap', () => {
+    // Item landscape (90, 54); arrange landscape → size (90, 54).
+    // 6 寸 (102, 152). cols = floor(94/92) = 1, rows = floor(144/56) = 2.
+    const c = document.createElement('canvas');
+    const item = makeItem(90, 54);
+    const layout = renderPreview(
+      c,
+      { paperSize: '6寸（4R）', margin: { top: 5, bottom: 5, left: 5, right: 5 },
+        gap: { h: 2, v: 2 }, drawing: 'once', showCropMarks: false,
+        arrangeOrient: 'landscape' },
+      PAPER_SIZES,
+      [item]
+    );
+    expect(layout.count).toBe(2);
+  });
+});
