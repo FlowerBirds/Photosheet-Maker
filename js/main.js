@@ -387,6 +387,8 @@ createModeTab({
   onSwitch: (newMode) => {
     state.mode = newMode;
     if (newMode === 'PHOTO') {
+      // CARD → PHOTO: cancel any active card cropper.
+      cardEditor.cancelCrop();
       // Restore photo cropper if needed.
       if (state.originalImage && !state.croppedCanvas && !cropperWrapper.isActive()) {
         dom.cropImage.src = state.originalImage.src;
@@ -401,7 +403,7 @@ createModeTab({
       state.drawing = 'repeat';
       rebuildPhotoSource();
     } else {
-      // CARD mode: destroy any active cropper, jump straight to READY.
+      // PHOTO → CARD: destroy any active photo cropper, jump straight to READY.
       if (cropperWrapper.isActive()) cropperWrapper.destroy();
       state.drawing = 'repeat';  // single CardSourceItem is repeated to fill paper
       setStatus('READY');
