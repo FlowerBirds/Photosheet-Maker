@@ -76,6 +76,7 @@ const state = {
   sourceItems: [],     // current SourceItem[] (length 1 in photo, N in card)
   drawing: 'repeat',   // 'repeat' for photo, 'once' for card
   mode: 'PHOTO',       // 'PHOTO' | 'CARD'
+  arrangeOrient: 'portrait',  // arrangement (layout) orientation, in CARD mode
 };
 
 const cropperWrapper = createCropperWrapper(dom.cropImage);
@@ -141,6 +142,7 @@ function refresh() {
     gap: st.gap,
     drawing: st.drawing,
     zoom: st.zoom,
+    arrangeOrient: st.arrangeOrient,
     showCropMarks: st.showCropMarks,
     showFooter: st.showFooter,
   };
@@ -345,7 +347,13 @@ const cardSections  = [dom.cardSection];
 // createModeTab attaches listeners to the tab buttons (its side effect).
 // Note: cardEditor is referenced inside onSwitch, so it must be declared
 // before this call.
-const cardEditor = initCardEditor({
+let cardEditor;
+const setArrangementOrient = (value) => {
+  state.arrangeOrient = value;
+  if (cardEditor) cardEditor.setArrangementOrient(value);
+  refresh();
+};
+cardEditor = initCardEditor({
   designPanel:  dom.designPhase,
   cardCanvas:   dom.cardCanvas,
   btnAddText:   dom.btnAddText,
@@ -407,6 +415,8 @@ createModeTab({
       if (cropperWrapper.isActive()) cropperWrapper.destroy();
       state.drawing = 'repeat';  // single CardSourceItem is repeated to fill paper
       setStatus('READY');
+      // Sync arrange orientation into card-editor.
+      cardEditor.setArrangementOrient(state.arrangeOrient);
       // Enter designing phase (also makes card canvas visible).
       cardEditor.redraw();
       return;
