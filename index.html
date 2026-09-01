@@ -155,6 +155,20 @@
           </div>
         </div>
 
+        <!-- Card image crop phase (shown when user picks an image) -->
+        <section class="card" id="card-crop-section" hidden>
+          <h2>裁剪图片</h2>
+          <div class="crop-container">
+            <img id="card-crop-img" alt="待裁剪图片" />
+          </div>
+          <div class="crop-actions">
+            <button id="btn-card-crop-rotate-left"  class="btn-secondary">↺ 左旋转</button>
+            <button id="btn-card-crop-rotate-right" class="btn-secondary">↻ 右旋转</button>
+            <button id="btn-card-crop-finish"       class="btn-primary">完成裁剪</button>
+            <button id="btn-card-crop-cancel"       class="btn-secondary">取消</button>
+          </div>
+        </section>
+
         <!-- Design phase -->
         <div id="card-design-phase">
           <h2>卡片边框</h2>
