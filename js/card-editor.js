@@ -3,6 +3,7 @@ import {
   DEFAULT_FIELD_COLOR,
 } from './constants.js';
 import { CardSourceItem } from './card-builder.js';
+import { createCardCropper } from './card-cropper.js';
 
 const DEFAULT_FONT_SIZE_MM = 5;  // mm — reasonable starting size for new text
 
@@ -34,11 +35,20 @@ const DEFAULT_FONT_SIZE_MM = 5;  // mm — reasonable starting size for new text
  *   cardW:        HTMLInputElement,
  *   cardH:        HTMLInputElement,
  *   // Arrange phase (paper settings are in #settings-section)
+ *   // Card image crop phase
+ *   cardCropSection:    HTMLElement,
+ *   cardCropImg:        HTMLImageElement,
+ *   btnCardCropRotateL: HTMLButtonElement,
+ *   btnCardCropRotateR: HTMLButtonElement,
+ *   btnCardCropFinish:  HTMLButtonElement,
+ *   btnCardCropCancel:  HTMLButtonElement,
  *   // State callbacks
  *   getState:     () => ({ paperSize: string, dpi: number }),
  *   setSourceItems: (items: import('./source-item.js').SourceItem[]) => void,
  *   setPhase:     (phase: 'designing'|'arranging') => void,
  *   requestRefresh: () => void,
+ *   // Override (tests)
+ *   createCardCropper?: typeof import('./card-cropper.js').createCardCropper,
  * }} els
  */
 export function initCardEditor(els) {
@@ -58,6 +68,10 @@ export function initCardEditor(els) {
   let dragOffset = null;            // { dx, dy } in mm during drag
   // Card-level border. Default: 0.1mm gray (~1px at 350dpi).
   const border = { width: 0.1, color: '#888888' };
+  // Crop state: null when idle; { cw, sourceCanvas } while cropping.
+  let cropState = null;
+  // Factory (overridable for tests).
+  const _createCardCropper = els.createCardCropper || createCardCropper;
 
   /** Read the currently-selected orientation radio ('portrait' | 'landscape'). */
   function getOrientation() {
@@ -141,31 +155,9 @@ export function initCardEditor(els) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     try {
-      // loadImage returns an HTMLCanvasElement (not an Image) — read
-      // .width/.height, not .naturalWidth.
+      // loadImage returns an HTMLCanvasElement (not an Image).
       const canvas = await loadImage(file);
-      const srcW = canvas.width;
-      const srcH = canvas.height;
-      const cardSize = getCardSize();
-      const id = `e${nextId++}`;
-      // Fit-within-card initial size, preserve aspect.
-      const maxH = cardSize.h * 0.4;
-      const maxW = cardSize.w * 0.6;
-      const scale = Math.min(maxW / srcW, maxH / srcH);
-      const w = srcW * scale;
-      const h = srcH * scale;
-      elements.push({
-        type: 'image', id,
-        src: canvas,
-        x: (cardSize.w - w) / 2,
-        y: (cardSize.h - h) / 2,
-        w, h,
-        aspectLocked: true,
-        _aspect: w / h,
-      });
-      selectedId = id;
-      renderElementList();
-      drawDesigner();
+      startCrop(canvas);
     } catch (err) {
       window.alert(err.message);
     } finally {
@@ -176,6 +168,78 @@ export function initCardEditor(els) {
   // Phase toggle buttons.
   els.btnComplete.addEventListener('click', () => switchPhase('arranging'));
   els.btnRedesign.addEventListener('click', () => switchPhase('designing'));
+
+  // --- Image crop phase ---
+  // Wire crop buttons.
+  els.btnCardCropRotateL.addEventListener('click', () => {
+    if (cropState && cropState.cw.isActive()) cropState.cw.rotate(-90);
+  });
+  els.btnCardCropRotateR.addEventListener('click', () => {
+    if (cropState && cropState.cw.isActive()) cropState.cw.rotate(90);
+  });
+  els.btnCardCropFinish.addEventListener('click', completeCrop);
+  els.btnCardCropCancel.addEventListener('click', cancelCrop);
+
+  /**
+   * Show the crop panel, load the canvas into the <img>, init Cropper.js.
+   * Idempotent: if already cropping, destroys first.
+   */
+  function startCrop(sourceCanvas) {
+    if (cropState) cancelCrop();
+    els.cardCropImg.src = sourceCanvas.toDataURL();
+    const cw = _createCardCropper(els.cardCropImg);
+    cw.init();
+    cropState = { cw, sourceCanvas };
+    els.cardCropSection.hidden = false;
+  }
+
+  /** Commit the crop → push a new image element to the card → tear down. */
+  function completeCrop() {
+    if (!cropState) return;
+    const { cw } = cropState;
+    const cropped = cw.getCroppedCanvas();
+    if (!cropped) {
+      window.alert('请先调整裁剪框');
+      return;
+    }
+    const cardSize = getCardSize();
+    const srcW = cropped.width;
+    const srcH = cropped.height;
+    // Fit-within-card initial size, preserve aspect.
+    const maxH = cardSize.h * 0.4;
+    const maxW = cardSize.w * 0.6;
+    const scale = Math.min(maxW / srcW, maxH / srcH);
+    const w = srcW * scale;
+    const h = srcH * scale;
+    const id = `e${nextId++}`;
+    elements.push({
+      type: 'image', id,
+      src: cropped,
+      x: (cardSize.w - w) / 2,
+      y: (cardSize.h - h) / 2,
+      w, h,
+      aspectLocked: true,
+      _aspect: w / h,
+    });
+    selectedId = id;
+    finishCropInternal();
+    renderElementList();
+    drawDesigner();
+  }
+
+  /** Cancel cropping without adding an element. */
+  function cancelCrop() {
+    if (!cropState) return;
+    finishCropInternal();
+  }
+
+  /** Tear down cropper, clear img src, hide panel. Idempotent. */
+  function finishCropInternal() {
+    if (cropState && cropState.cw) cropState.cw.destroy();
+    els.cardCropImg.src = '';
+    els.cardCropSection.hidden = true;
+    cropState = null;
+  }
 
   // --- Drag interactions on the card canvas ---
   els.cardCanvas.addEventListener('pointerdown', onCanvasPointerDown);
@@ -593,11 +657,19 @@ export function initCardEditor(els) {
     },
     /** Clear all elements (used on reupload of photo mode that affects card). */
     reset() {
+      cancelCrop();
       elements = [];
       selectedId = null;
       renderElementList();
       drawDesigner();
     },
+    /** Cancel any active cropper. Safe to call when not cropping. */
+    cancelCrop,
+    /**
+     * Start cropping a source canvas (HTMLCanvasElement). Exposed for
+     * programmatic flows; the file-input handler calls this internally.
+     */
+    startCrop,
   };
 }
 
