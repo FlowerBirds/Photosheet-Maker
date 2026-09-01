@@ -1,5 +1,6 @@
 import { calculateLayout } from './layout-engine.js';
 import { drawCropMarks } from './crop-marks.js';
+import { arrangedSize } from './arrange-size.js';
 
 /**
  * Generate the full-resolution output image and trigger a download.
@@ -14,6 +15,7 @@ import { drawCropMarks } from './crop-marks.js';
  *   showCropMarks?: boolean,      // ignored in 'once' mode
  *   showFooter?: boolean,
  *   format: 'jpeg'|'png',
+ *   arrangeOrient?: 'portrait'|'landscape',
  * }} params
  * @param {Record<string,{w:number,h:number}>} paperMap
  * @returns {Promise<void>}
@@ -22,11 +24,14 @@ export async function exportImage(params, paperMap) {
   const {
     sourceItems, paperSize, dpi, margin, gap,
     drawing, zoom = 1, showCropMarks = true, showFooter = true, format,
+    arrangeOrient: arrangeOrientParam,
   } = params;
   if (!sourceItems || sourceItems.length === 0) {
     throw new Error('没有可导出的内容');
   }
   const sourceSize = sourceItems[0].size;
+  const arrangeOrient = arrangeOrientParam || 'portrait';
+  const layoutSize = arrangedSize(sourceItems[0], arrangeOrient);
   const paper = paperMap[paperSize];
   if (!paper) throw new Error(`未知相纸尺寸: ${paperSize}`);
 
@@ -41,40 +46,28 @@ export async function exportImage(params, paperMap) {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvasW, canvasH);
 
-  const layout = calculateLayout(sourceSize, paper, margin, gap);
-  const drawW = sourceSize.w * zoom;
-  const drawH = sourceSize.h * zoom;
+  const layout = calculateLayout(layoutSize, paper, margin, gap);
+  const drawW = layoutSize.w * zoom;
+  const drawH = layoutSize.h * zoom;
 
   if (drawing === 'repeat') {
     // Photo / card-template mode: cycle source items to fill every position.
     for (let i = 0; i < layout.positions.length; i++) {
       const item = sourceItems[i % sourceItems.length];
       const pos = layout.positions[i];
-      ctx.drawImage(
-        item.canvas,
-        Math.round(pos.x * mmToPx),
-        Math.round(pos.y * mmToPx),
-        Math.round(drawW * mmToPx),
-        Math.round(drawH * mmToPx)
-      );
+      drawExportItem(ctx, item, pos, mmToPx, layoutSize, zoom);
     }
   } else {
     sourceItems.forEach((item, i) => {
       const pos = layout.positions[i];
       if (!pos) return;
-      ctx.drawImage(
-        item.canvas,
-        Math.round(pos.x * mmToPx),
-        Math.round(pos.y * mmToPx),
-        Math.round(drawW * mmToPx),
-        Math.round(drawH * mmToPx)
-      );
+      drawExportItem(ctx, item, pos, mmToPx, layoutSize, zoom);
     });
   }
 
   // Crop marks: shared toggle across both modes. Cards always pass zoom=1.
   if (showCropMarks) {
-    drawCropMarks(ctx, layout, sourceSize, mmToPx, zoom);
+    drawCropMarks(ctx, layout, layoutSize, mmToPx, zoom);
   }
 
   // Footer (opt-in; default ON).
@@ -112,4 +105,26 @@ function triggerDownload(blob, filename) {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/**
+ * Draw an item at mm coords on the export canvas, rotating 90° if
+ * designedSize != layoutSize.
+ */
+function drawExportItem(ctx, item, pos, mmToPx, layoutSize, zoom) {
+  const designedSize = item.size;
+  const sameOrient = designedSize.w === layoutSize.w && designedSize.h === layoutSize.h;
+  const xPx = Math.round(pos.x * mmToPx);
+  const yPx = Math.round(pos.y * mmToPx);
+  const wPx = Math.round(layoutSize.w * zoom * mmToPx);
+  const hPx = Math.round(layoutSize.h * zoom * mmToPx);
+  if (sameOrient) {
+    ctx.drawImage(item.canvas, xPx, yPx, wPx, hPx);
+  } else {
+    ctx.save();
+    ctx.translate(xPx + wPx, yPx);
+    ctx.rotate(Math.PI / 2);
+    ctx.drawImage(item.canvas, 0, 0, hPx, wPx);
+    ctx.restore();
+  }
 }
