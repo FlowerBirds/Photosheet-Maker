@@ -92,6 +92,8 @@ export function initCardEditor(els) {
   let cropState = null;
   // Factory (overridable for tests).
   const _createCardCropper = els.createCardCropper || createCardCropper;
+  // Arrangement (layout) orientation. Defaults to design orientation.
+  let arrangeOrient = getOrientation();
 
   /** Read the currently-selected orientation radio ('portrait' | 'landscape'). */
   function getOrientation() {
@@ -171,6 +173,15 @@ export function initCardEditor(els) {
   });
 
   els.btnAddImage.addEventListener('click', () => els.imageInput.click());
+
+  // Arrange-orientation radios.
+  document.querySelectorAll('input[name="card-arrange-orientation"]').forEach((r) => {
+    r.addEventListener('change', () => {
+      if (!r.checked) return;
+      arrangeOrient = r.value;
+    });
+  });
+
   els.imageInput.addEventListener('change', async (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -691,6 +702,15 @@ export function initCardEditor(els) {
      * programmatic flows; the file-input handler calls this internally.
      */
     startCrop,
+    /** Get the current arrangement orientation ('portrait'|'landscape'). */
+    getArrangementOrient: () => arrangeOrient,
+    /** Set the arrangement orientation (updates radio state only; layout is the consumer's job). */
+    setArrangementOrient(value) {
+      if (value !== 'portrait' && value !== 'landscape') return;
+      arrangeOrient = value;
+      const r = document.querySelector(`input[name="card-arrange-orientation"][value="${value}"]`);
+      if (r) r.checked = true;
+    },
   };
 }
 

@@ -275,3 +275,108 @@ describe('drawDragGuides', () => {
     expect(ctx.stroke).toHaveBeenCalledTimes(1);
   });
 });
+
+// ---------- Arrange orientation ----------
+
+describe('card editor arrange orientation', () => {
+  function makeArrEls() {
+    document.body.innerHTML = `
+      <input type="file" id="card-image-input" />
+      <button id="btn-add-text"></button>
+      <button id="btn-add-image"></button>
+      <div id="card-element-list"></div>
+      <button id="btn-complete-design"></button>
+      <button id="btn-redesign"></button>
+      <select id="select-card-size"></select>
+      <div id="custom-card-size"></div>
+      <input type="range" id="card-w" value="90" />
+      <input type="range" id="card-h" value="54" />
+      <input type="range" id="card-border-width" value="0.1" />
+      <input type="color"   id="card-border-color" value="#888888" />
+      <span id="card-border-width-val"></span>
+      <span id="card-w-val"></span>
+      <span id="card-h-val"></span>
+      <canvas id="card-canvas"></canvas>
+      <div id="card-design-phase"></div>
+      <div id="card-arrange-phase"></div>
+      <section id="card-crop-section" hidden>
+        <img id="card-crop-img" />
+        <button id="btn-card-crop-rotate-left"></button>
+        <button id="btn-card-crop-rotate-right"></button>
+        <button id="btn-card-crop-finish"></button>
+        <button id="btn-card-crop-cancel"></button>
+      </section>
+      <input type="radio" name="card-orientation" value="portrait" checked />
+      <input type="radio" name="card-orientation" value="landscape" />
+      <input type="radio" name="card-arrange-orientation" value="portrait" checked />
+      <input type="radio" name="card-arrange-orientation" value="landscape" />
+    `;
+    return {
+      designPanel:  document.getElementById('card-design-phase'),
+      cardCanvas:   document.getElementById('card-canvas'),
+      btnAddText:   document.getElementById('btn-add-text'),
+      btnAddImage:  document.getElementById('btn-add-image'),
+      imageInput:   document.getElementById('card-image-input'),
+      elementList:  document.getElementById('card-element-list'),
+      btnComplete:  document.getElementById('btn-complete-design'),
+      btnRedesign:  document.getElementById('btn-redesign'),
+      selectSize:   document.getElementById('select-card-size'),
+      customRow:    document.getElementById('custom-card-size'),
+      cardW:        document.getElementById('card-w'),
+      cardH:        document.getElementById('card-h'),
+      cardBorderWidth: document.getElementById('card-border-width'),
+      cardBorderColor: document.getElementById('card-border-color'),
+      cardBorderWidthVal: document.getElementById('card-border-width-val'),
+      cardWVal: document.getElementById('card-w-val'),
+      cardHVal: document.getElementById('card-h-val'),
+      cardCropSection:    document.getElementById('card-crop-section'),
+      cardCropImg:        document.getElementById('card-crop-img'),
+      btnCardCropRotateL: document.getElementById('btn-card-crop-rotate-left'),
+      btnCardCropRotateR: document.getElementById('btn-card-crop-rotate-right'),
+      btnCardCropFinish:  document.getElementById('btn-card-crop-finish'),
+      btnCardCropCancel:  document.getElementById('btn-card-crop-cancel'),
+    };
+  }
+
+  function initEditor() {
+    return initCardEditor({
+      ...makeArrEls(),
+      getState: () => ({ dpi: 300 }),
+      setSourceItems: () => {},
+      setPhase: () => {},
+      requestRefresh: () => {},
+    });
+  }
+
+  it('default arrangeOrient follows design orientation (portrait)', () => {
+    initEditor();
+    const r = document.querySelector('input[name="card-arrange-orientation"]:checked');
+    expect(r.value).toBe('portrait');
+  });
+
+  it('changing arrange-orientation radio does not affect design orientation', () => {
+    initEditor();
+    document.querySelector(
+      'input[name="card-arrange-orientation"][value="landscape"]'
+    ).checked = true;
+    document.querySelector(
+      'input[name="card-arrange-orientation"][value="landscape"]'
+    ).dispatchEvent(new Event('change', { bubbles: true }));
+    const designR = document.querySelector('input[name="card-orientation"]:checked');
+    expect(designR.value).toBe('portrait');
+  });
+
+  it('setArrangementOrient API updates the radio state', () => {
+    const editor = initEditor();
+    editor.setArrangementOrient('landscape');
+    const r = document.querySelector('input[name="card-arrange-orientation"]:checked');
+    expect(r.value).toBe('landscape');
+  });
+
+  it('getArrangementOrient returns the current value', () => {
+    const editor = initEditor();
+    expect(editor.getArrangementOrient()).toBe('portrait');
+    editor.setArrangementOrient('landscape');
+    expect(editor.getArrangementOrient()).toBe('landscape');
+  });
+});
