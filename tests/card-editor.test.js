@@ -220,3 +220,58 @@ describe('card editor crop flow', () => {
     expect(els.elementList.querySelectorAll('.element-row').length).toBe(0);
   });
 });
+
+// ---------- Drag guides ----------
+//
+// jsdom's canvas.getContext() returns a native-bound ctx that JS-level
+// spy/proxy can't intercept reliably. Test drawDragGuides directly with a
+// mock ctx to verify its visual contract.
+
+import { drawDragGuides } from '../js/card-editor.js';
+
+function mockCtx() {
+  const fns = {};
+  for (const name of ['save', 'restore', 'beginPath', 'moveTo', 'lineTo', 'stroke']) {
+    fns[name] = vi.fn();
+  }
+  // Properties we set/read.
+  return {
+    ...fns,
+    setLineDash: vi.fn(),
+    strokeStyle: '',
+    lineWidth: 0,
+  };
+}
+
+describe('drawDragGuides', () => {
+  it('uses dashed blue stroke pattern [4, 4]', () => {
+    const ctx = mockCtx();
+    drawDragGuides(ctx, 600, 400);
+    expect(ctx.setLineDash).toHaveBeenCalledWith([4, 4]);
+    expect(ctx.strokeStyle).toBe('#2d7ff9');
+  });
+
+  it('draws horizontal center line from (0, h/2) to (w, h/2)', () => {
+    const ctx = mockCtx();
+    drawDragGuides(ctx, 600, 400);
+    // Find the (moveTo, lineTo) pairs that form the horizontal segment.
+    // beginPath + moveTo(x,y) + lineTo(x',y') + stroke: 4 calls.
+    expect(ctx.moveTo).toHaveBeenCalledWith(0, 200);
+    expect(ctx.lineTo).toHaveBeenCalledWith(600, 200);
+  });
+
+  it('draws vertical center line from (w/2, 0) to (w/2, h)', () => {
+    const ctx = mockCtx();
+    drawDragGuides(ctx, 600, 400);
+    expect(ctx.moveTo).toHaveBeenCalledWith(300, 0);
+    expect(ctx.lineTo).toHaveBeenCalledWith(300, 400);
+  });
+
+  it('wraps with save/restore so no state leaks', () => {
+    const ctx = mockCtx();
+    drawDragGuides(ctx, 100, 100);
+    expect(ctx.save).toHaveBeenCalledTimes(1);
+    expect(ctx.restore).toHaveBeenCalledTimes(1);
+    expect(ctx.stroke).toHaveBeenCalledTimes(1);
+  });
+});

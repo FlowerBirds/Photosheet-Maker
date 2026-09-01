@@ -5,6 +5,26 @@ import {
 import { CardSourceItem } from './card-builder.js';
 import { createCardCropper } from './card-cropper.js';
 
+/**
+ * Draw two dashed center guides across the card canvas (in display px).
+ * Exported so the visual contract can be unit-tested directly with a mock ctx.
+ */
+export function drawDragGuides(ctx, dw, dh) {
+  const cx = dw / 2;
+  const cy = dh / 2;
+  ctx.save();
+  ctx.strokeStyle = '#2d7ff9';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(0, cy);
+  ctx.lineTo(dw, cy);
+  ctx.moveTo(cx, 0);
+  ctx.lineTo(cx, dh);
+  ctx.stroke();
+  ctx.restore();
+}
+
 const DEFAULT_FONT_SIZE_MM = 5;  // mm — reasonable starting size for new text
 
 /**
@@ -354,6 +374,7 @@ export function initCardEditor(els) {
     ctx.fillRect(0, 0, dw, dh);
     ctx.drawImage(item.canvas, 0, 0, dw, dh);
     drawSelectionOverlay(ctx, scale);
+    if (dragOffset) drawDragGuides(ctx, dw, dh);
   }
 
   function drawSelectionOverlay(ctx, scale) {
