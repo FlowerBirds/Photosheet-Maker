@@ -57,6 +57,17 @@ const dom = {
   cardBorderWidthVal: $('card-border-width-val'),
   cardWVal:           $('card-w-val'),
   cardHVal:           $('card-h-val'),
+  // card properties panel (selected-element editor)
+  propertiesSection:  $('card-properties-section'),
+  propFontSize:       $('prop-font-size'),
+  propFontSizeInput:  $('prop-font-size-input'),
+  propFontSizeVal:    $('prop-font-size-val'),
+  propImageDims:      $('prop-image-dims'),
+  propWInput:         $('prop-w-input'),
+  propWVal:           $('prop-w-val'),
+  propHInput:         $('prop-h-input'),
+  propHVal:           $('prop-h-val'),
+  propAspectToggle:   $('prop-aspect-toggle'),
 };
 
 // ---------- State ----------
@@ -377,6 +388,17 @@ cardEditor = initCardEditor({
   btnCardCropRotateR: dom.btnCardCropRotateR,
   btnCardCropFinish:  dom.btnCardCropFinish,
   btnCardCropCancel:  dom.btnCardCropCancel,
+  // Card properties panel (selected-element editor)
+  propertiesSection:  dom.propertiesSection,
+  propFontSize:       dom.propFontSize,
+  propFontSizeInput:  dom.propFontSizeInput,
+  propFontSizeVal:    dom.propFontSizeVal,
+  propImageDims:      dom.propImageDims,
+  propWInput:         dom.propWInput,
+  propWVal:           dom.propWVal,
+  propHInput:         dom.propHInput,
+  propHVal:           dom.propHVal,
+  propAspectToggle:   dom.propAspectToggle,
   getState:     () => ({ paperSize: state.paperSize, dpi: state.dpi }),
   setSourceItems: (items) => { state.sourceItems = items; },
   setPhase: (phase) => {
