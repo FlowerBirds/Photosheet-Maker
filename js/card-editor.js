@@ -214,7 +214,7 @@ export function initCardEditor(els) {
       y: cardSize.h / 2 - h / 2,
       width: w,
       height: h,
-      borderWidth: 2,
+      borderWidth: 0.1,
       borderColor: '#888888',
       fillColor: '#ffffff',
     });
