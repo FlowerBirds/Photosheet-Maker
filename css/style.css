@@ -133,6 +133,9 @@ button { font: inherit; }
   gap: 10px;
   margin: 10px 0;
 }
+/* Ensure [hidden] wins over .slider-row's display:flex so JS-toggled
+   rows actually disappear (font-size for image elements, etc.). */
+[hidden] { display: none !important; }
 .slider-row label {
   flex: 0 0 40px;
   font-size: 13px;
