@@ -114,9 +114,11 @@ function drawExportItem(ctx, item, pos, mmToPx, layoutSize, zoom) {
   const sameOrient = designedSize.w === layoutSize.w && designedSize.h === layoutSize.h;
   const wPx = Math.round(layoutSize.w * zoom * mmToPx);
   const hPx = Math.round(layoutSize.h * zoom * mmToPx);
-  // Cell center in mm; the cell is defined by designed size (layout may differ).
-  const cxPx = Math.round((pos.x + designedSize.w / 2) * mmToPx);
-  const cyPx = Math.round((pos.y + designedSize.h / 2) * mmToPx);
+  // Cell is defined by layoutSize (used by calculateLayout). Crop marks span
+  // the same cell. The card source may have different (designed) dimensions
+  // and is rotated to fit the cell.
+  const cxPx = Math.round((pos.x + layoutSize.w / 2) * mmToPx);
+  const cyPx = Math.round((pos.y + layoutSize.h / 2) * mmToPx);
   if (sameOrient) {
     ctx.drawImage(
       item.canvas,

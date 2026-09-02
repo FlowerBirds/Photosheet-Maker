@@ -121,9 +121,11 @@ function drawItemAtPosition(ctx, item, pos, scale, layoutSize, zoom) {
   const sameOrient = designedSize.w === layoutSize.w && designedSize.h === layoutSize.h;
   const wPx = layoutSize.w * zoom * scale;
   const hPx = layoutSize.h * zoom * scale;
-  // Cell center in screen px. Designed dimensions define the cell; layout may differ.
-  const cx = (pos.x + designedSize.w / 2) * scale;
-  const cy = (pos.y + designedSize.h / 2) * scale;
+  // Cell is defined by layoutSize (the size that was used by calculateLayout).
+  // The card source may have different (designed) dimensions; we rotate to fit
+  // the cell. Crop marks are also drawn at layout cell boundaries.
+  const cx = (pos.x + layoutSize.w / 2) * scale;
+  const cy = (pos.y + layoutSize.h / 2) * scale;
   if (sameOrient) {
     ctx.drawImage(item.canvas, cx - wPx / 2, cy - hPx / 2, wPx, hPx);
   } else {

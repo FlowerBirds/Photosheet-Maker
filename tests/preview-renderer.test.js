@@ -103,6 +103,34 @@ describe('renderPreview — arrange orientation', () => {
     expect(matched).toBeTruthy();
   });
 
+  it('rotation path uses layoutSize for cell center, not designedSize', () => {
+    // Item designed landscape (90, 54); arrange portrait → layoutSize = (54, 90).
+    // Paper 220×300 mm, margin 0, gap 0 → first cell at (0, 0).
+    // Layout cell is layoutSize = (54, 90); its center is (27, 45) mm.
+    // Card drawn rotated 90° should be centered on layout cell center.
+    // Preview scale = min(600/220, 600/300) = 2.0 (height-bounded in jsdom).
+    const c = document.createElement('canvas');
+    const item = makeItem(90, 54);
+    const ctx = c.getContext('2d');
+    const translateSpy = vi.spyOn(ctx, 'translate');
+    renderPreview(
+      c,
+      { paperSize: 'ARR', margin: { top: 0, bottom: 0, left: 0, right: 0 },
+        gap: { h: 0, v: 0 }, drawing: 'once', zoom: 1,
+        showCropMarks: false, showFooter: false,
+        arrangeOrient: 'portrait' },
+      { ARR: { w: 220, h: 300 } },
+      [item]
+    );
+    // Cell center in mm = (27, 45); preview scale = 2; expect translate(54, 90).
+    const expectedX = Math.round(27 * 2);  // 54
+    const expectedY = Math.round(45 * 2);  // 90
+    const matched = translateSpy.mock.calls.find(args =>
+      Math.round(args[0]) === expectedX && Math.round(args[1]) === expectedY
+    );
+    expect(matched).toBeTruthy();
+  });
+
   it('uses designedSize when arrangeOrient matches item orientation', () => {
     // Item portrait (25, 35); arrange portrait → size (25, 35).
     // 6 寸 (102, 152). cols = floor(94/27) = 3, rows = floor(144/37) = 3.
