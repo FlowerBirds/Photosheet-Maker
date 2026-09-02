@@ -380,3 +380,218 @@ describe('card editor arrange orientation', () => {
     expect(editor.getArrangementOrient()).toBe('landscape');
   });
 });
+
+// ---------- Properties panel ----------
+
+function makePropsEls() {
+  document.body.innerHTML = `
+    <input type="file" id="card-image-input" />
+    <button id="btn-add-text"></button>
+    <button id="btn-add-image"></button>
+    <div id="card-element-list"></div>
+    <button id="btn-complete-design"></button>
+    <button id="btn-redesign"></button>
+    <select id="select-card-size"></select>
+    <div id="custom-card-size"></div>
+    <input type="range" id="card-w" value="90" />
+    <input type="range" id="card-h" value="54" />
+    <input type="range" id="card-border-width" value="0.1" />
+    <input type="color"   id="card-border-color" value="#888888" />
+    <span id="card-border-width-val"></span>
+    <span id="card-w-val"></span>
+    <span id="card-h-val"></span>
+    <canvas id="card-canvas"></canvas>
+    <div id="card-design-phase"></div>
+    <div id="card-arrange-phase"></div>
+    <section id="card-crop-section" hidden>
+      <img id="card-crop-img" />
+      <button id="btn-card-crop-rotate-left"></button>
+      <button id="btn-card-crop-rotate-right"></button>
+      <button id="btn-card-crop-finish"></button>
+      <button id="btn-card-crop-cancel"></button>
+    </section>
+    <section id="card-properties-section" hidden>
+      <div id="prop-font-size" hidden>
+        <input type="range" id="prop-font-size-input" min="2" max="40" step="0.5" />
+        <span id="prop-font-size-val"></span>
+      </div>
+      <div id="prop-image-dims" hidden>
+        <input type="range" id="prop-w-input" min="1" max="200" step="0.5" />
+        <span id="prop-w-val"></span>
+        <input type="range" id="prop-h-input" min="1" max="200" step="0.5" />
+        <span id="prop-h-val"></span>
+        <button id="prop-aspect-toggle"></button>
+      </div>
+    </section>
+  `;
+  return {
+    designPanel:  document.getElementById('card-design-phase'),
+    cardCanvas:   document.getElementById('card-canvas'),
+    btnAddText:   document.getElementById('btn-add-text'),
+    btnAddImage:  document.getElementById('btn-add-image'),
+    imageInput:   document.getElementById('card-image-input'),
+    elementList:  document.getElementById('card-element-list'),
+    btnComplete:  document.getElementById('btn-complete-design'),
+    btnRedesign:  document.getElementById('btn-redesign'),
+    selectSize:   document.getElementById('select-card-size'),
+    customRow:    document.getElementById('custom-card-size'),
+    cardW:        document.getElementById('card-w'),
+    cardH:        document.getElementById('card-h'),
+    cardBorderWidth: document.getElementById('card-border-width'),
+    cardBorderColor: document.getElementById('card-border-color'),
+    cardBorderWidthVal: document.getElementById('card-border-width-val'),
+    cardWVal: document.getElementById('card-w-val'),
+    cardHVal: document.getElementById('card-h-val'),
+    cardCropSection:    document.getElementById('card-crop-section'),
+    cardCropImg:        document.getElementById('card-crop-img'),
+    btnCardCropRotateL: document.getElementById('btn-card-crop-rotate-left'),
+    btnCardCropRotateR: document.getElementById('btn-card-crop-rotate-right'),
+    btnCardCropFinish:  document.getElementById('btn-card-crop-finish'),
+    btnCardCropCancel:  document.getElementById('btn-card-crop-cancel'),
+    propertiesSection: document.getElementById('card-properties-section'),
+    propFontSize:      document.getElementById('prop-font-size'),
+    propFontSizeInput: document.getElementById('prop-font-size-input'),
+    propFontSizeVal:   document.getElementById('prop-font-size-val'),
+    propImageDims:     document.getElementById('prop-image-dims'),
+    propWInput:        document.getElementById('prop-w-input'),
+    propWVal:          document.getElementById('prop-w-val'),
+    propHInput:        document.getElementById('prop-h-input'),
+    propHVal:          document.getElementById('prop-h-val'),
+    propAspectToggle:  document.getElementById('prop-aspect-toggle'),
+  };
+}
+
+function initPropsEditor(overrides = {}) {
+  const createCardCropper = overrides.createCardCropper || fakeCropperFactory();
+  return initCardEditor({
+    ...makePropsEls(),
+    createCardCropper,
+    getState: () => ({ dpi: 300 }),
+    setSourceItems: () => {},
+    setPhase: () => {},
+    requestRefresh: () => {},
+  });
+}
+
+/**
+ * Helper: add an image element via the crop flow and return its id + sizes.
+ * Uses a 200x100 source so the fitted initial w/h has a 2:1 aspect.
+ */
+function addImageElement(editor) {
+  editor.startCrop({
+    width: 200, height: 100,
+    toDataURL: () => 'data:image/png;base64,ZmFrZQ==',
+  });
+  document.getElementById('btn-card-crop-finish').click();
+  const rows = document.getElementById('card-element-list').querySelectorAll('.element-row');
+  return rows[0];  // image row
+}
+
+describe('card editor properties panel', () => {
+  it('hides properties section when nothing is selected', () => {
+    initPropsEditor();
+    expect(document.getElementById('card-properties-section').hidden).toBe(true);
+    expect(document.getElementById('prop-font-size').hidden).toBe(true);
+    expect(document.getElementById('prop-image-dims').hidden).toBe(true);
+  });
+
+  it('shows font-size slider when text element is selected; hides image dims', () => {
+    initPropsEditor();
+    document.getElementById('btn-add-text').click();
+    expect(document.getElementById('card-properties-section').hidden).toBe(false);
+    expect(document.getElementById('prop-font-size').hidden).toBe(false);
+    expect(document.getElementById('prop-image-dims').hidden).toBe(true);
+    // Default fontSize is DEFAULT_FONT_SIZE_MM (5).
+    expect(document.getElementById('prop-font-size-input').value).toBe('5');
+    expect(document.getElementById('prop-font-size-val').textContent).toBe('5 mm');
+  });
+
+  it('shows image dims (w/h sliders + lock button) when image element is selected; hides font-size', () => {
+    const editor = initPropsEditor();
+    addImageElement(editor);
+    expect(document.getElementById('card-properties-section').hidden).toBe(false);
+    expect(document.getElementById('prop-font-size').hidden).toBe(true);
+    expect(document.getElementById('prop-image-dims').hidden).toBe(false);
+    // W/H sliders are populated (non-empty).
+    expect(document.getElementById('prop-w-input').value).toMatch(/^\d/);
+    expect(document.getElementById('prop-h-input').value).toMatch(/^\d/);
+    expect(document.getElementById('prop-w-val').textContent).toMatch(/\d+ mm$/);
+    expect(document.getElementById('prop-h-val').textContent).toMatch(/\d+ mm$/);
+    // Newly added image is aspectLocked by default → icon is 🔗.
+    expect(document.getElementById('prop-aspect-toggle').textContent).toBe('🔗');
+  });
+
+  it('font-size slider input updates value mirror + reflects on element', () => {
+    const editor = initPropsEditor();
+    document.getElementById('btn-add-text').click();
+    const slider = document.getElementById('prop-font-size-input');
+    slider.value = '10';
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(document.getElementById('prop-font-size-val').textContent).toBe('10 mm');
+  });
+
+  it('font-size slider clamps displayed value to [2, 40]', () => {
+    const editor = initPropsEditor();
+    document.getElementById('btn-add-text').click();
+    const slider = document.getElementById('prop-font-size-input');
+    // jsdom doesn't auto-clamp on .value setter, so the implementation must clamp.
+    slider.value = '50';
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+    const v = Number(document.getElementById('prop-font-size-val').textContent.replace(' mm', ''));
+    expect(v).toBeLessThanOrEqual(40);
+    expect(v).toBeGreaterThanOrEqual(2);
+  });
+
+  it('image width slider with aspectLocked mirrors h slider', () => {
+    const editor = initPropsEditor();
+    addImageElement(editor);
+    // Image was added with 2:1 aspect (200x100) → w ≈ 54, h ≈ 27 (after fit-within-card).
+    const wSlider = document.getElementById('prop-w-input');
+    wSlider.value = '40';
+    wSlider.dispatchEvent(new Event('input', { bubbles: true }));
+    const hVal = Number(document.getElementById('prop-h-val').textContent.replace(' mm', ''));
+    const wVal = Number(document.getElementById('prop-w-val').textContent.replace(' mm', ''));
+    expect(wVal).toBe(40);
+    expect(hVal).toBeGreaterThan(0);
+    // Aspect preserved (2:1) → w ≈ 2 × h.
+    expect(Math.abs(wVal - 2 * hVal)).toBeLessThan(1);
+  });
+
+  it('aspect-toggle button toggles the lock icon', () => {
+    const editor = initPropsEditor();
+    addImageElement(editor);
+    const btn = document.getElementById('prop-aspect-toggle');
+    const before = btn.textContent;
+    btn.click();
+    const after = btn.textContent;
+    expect(before).not.toBe(after);
+    btn.click();
+    expect(btn.textContent).toBe(before);
+  });
+
+  it('switching selected element (text → image) refreshes the panel content', () => {
+    const editor = initPropsEditor();
+    document.getElementById('btn-add-text').click();
+    expect(document.getElementById('prop-font-size').hidden).toBe(false);
+    expect(document.getElementById('prop-image-dims').hidden).toBe(true);
+
+    // Add an image — selectedId is now the image; panel shows image dims.
+    addImageElement(editor);
+    expect(document.getElementById('prop-font-size').hidden).toBe(true);
+    expect(document.getElementById('prop-image-dims').hidden).toBe(false);
+
+    // Add another text — selectedId is now the new text; panel shows font-size.
+    document.getElementById('btn-add-text').click();
+    expect(document.getElementById('prop-font-size').hidden).toBe(false);
+    expect(document.getElementById('prop-image-dims').hidden).toBe(true);
+
+    // Click the image row's label to switch back; panel switches to image dims.
+    const rows = document.getElementById('card-element-list').querySelectorAll('.element-row');
+    const imageRow = Array.from(rows).find(r => r.textContent.includes('图片'));
+    expect(imageRow).toBeTruthy();
+    imageRow.querySelector('.element-label').click();
+
+    expect(document.getElementById('prop-font-size').hidden).toBe(true);
+    expect(document.getElementById('prop-image-dims').hidden).toBe(false);
+  });
+});

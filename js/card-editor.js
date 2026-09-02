@@ -62,6 +62,17 @@ const DEFAULT_FONT_SIZE_MM = 5;  // mm — reasonable starting size for new text
  *   btnCardCropRotateR: HTMLButtonElement,
  *   btnCardCropFinish:  HTMLButtonElement,
  *   btnCardCropCancel:  HTMLButtonElement,
+ *   // Properties panel (selected-element editor)
+ *   propertiesSection:  HTMLElement,
+ *   propFontSize:       HTMLElement,
+ *   propFontSizeInput:  HTMLInputElement,
+ *   propFontSizeVal:    HTMLElement,
+ *   propImageDims:      HTMLElement,
+ *   propWInput:         HTMLInputElement,
+ *   propWVal:           HTMLElement,
+ *   propHInput:         HTMLInputElement,
+ *   propHVal:           HTMLElement,
+ *   propAspectToggle:   HTMLButtonElement,
  *   // State callbacks
  *   getState:     () => ({ paperSize: string, dpi: number }),
  *   setSourceItems: (items: import('./source-item.js').SourceItem[]) => void,
@@ -169,6 +180,7 @@ export function initCardEditor(els) {
     });
     selectedId = id;
     renderElementList();
+    renderProperties();
     drawDesigner();
   });
 
@@ -255,6 +267,7 @@ export function initCardEditor(els) {
     selectedId = id;
     finishCropInternal();
     renderElementList();
+    renderProperties();
     drawDesigner();
   }
 
@@ -293,6 +306,7 @@ export function initCardEditor(els) {
     if (e.target === els.cardCanvas) {
       selectedId = null;
       renderElementList();
+      renderProperties();
       drawDesigner();
     }
   });
@@ -301,7 +315,99 @@ export function initCardEditor(els) {
   syncSizeInputs();
   els.customRow.hidden = els.selectSize.value !== '自定义';
   renderElementList();
+  if (els.propertiesSection) renderProperties();
   drawDesigner();
+
+  // Wire properties panel sliders (only if DOM is wired — older tests omit these).
+  if (els.propFontSizeInput) {
+  els.propFontSizeInput.addEventListener('input', () => {
+    const cur = elements.find(e => e.id === selectedId);
+    if (!cur || cur.type !== 'text') return;
+    const v = clamp(Number(els.propFontSizeInput.value), 2, 40);
+    cur.fontSize = v;
+    els.propFontSizeInput.value = String(round1(v));
+    els.propFontSizeVal.textContent = `${round1(v)} mm`;
+    drawDesigner();
+  });
+
+  const onPropW = (raw) => {
+    const cur = elements.find(e => e.id === selectedId);
+    if (!cur || cur.type !== 'image') return;
+    const v = clamp(Number(raw), 1, 200);
+    cur.w = v;
+    if (cur.aspectLocked && cur._aspect) {
+      cur.h = v / cur._aspect;
+      els.propHInput.value = String(round1(cur.h));
+      els.propHVal.textContent = `${round1(cur.h)} mm`;
+    }
+    els.propWInput.value = String(round1(v));
+    els.propWVal.textContent = `${round1(v)} mm`;
+    drawDesigner();
+  };
+  const onPropH = (raw) => {
+    const cur = elements.find(e => e.id === selectedId);
+    if (!cur || cur.type !== 'image') return;
+    const v = clamp(Number(raw), 1, 200);
+    cur.h = v;
+    if (cur.aspectLocked && cur._aspect) {
+      cur.w = v * cur._aspect;
+      els.propWInput.value = String(round1(cur.w));
+      els.propWVal.textContent = `${round1(cur.w)} mm`;
+    }
+    els.propHInput.value = String(round1(v));
+    els.propHVal.textContent = `${round1(v)} mm`;
+    drawDesigner();
+  };
+  els.propWInput.addEventListener('input', () => onPropW(els.propWInput.value));
+  els.propHInput.addEventListener('input', () => onPropH(els.propHInput.value));
+
+  els.propAspectToggle.addEventListener('click', () => {
+    const cur = elements.find(e => e.id === selectedId);
+    if (!cur || cur.type !== 'image') return;
+    cur.aspectLocked = !cur.aspectLocked;
+    if (cur.aspectLocked) cur._aspect = cur.w / cur.h || 1;
+    renderProperties();
+  });
+  }
+
+  /** Number clamp helper for slider values. */
+  function clamp(v, lo, hi) {
+    if (!Number.isFinite(v)) return lo;
+    return Math.min(hi, Math.max(lo, v));
+  }
+
+  /** Show the properties panel for the currently selected element (text or image). */
+  function renderProperties() {
+    // Defensive: bail out if properties DOM wasn't wired (e.g., older tests).
+    if (!els.propertiesSection) return;
+    const el = selectedId ? elements.find(e => e.id === selectedId) : null;
+    if (!el) {
+      els.propertiesSection.hidden = true;
+      els.propFontSize.hidden = true;
+      els.propImageDims.hidden = true;
+      return;
+    }
+    els.propertiesSection.hidden = false;
+    if (el.type === 'text') {
+      els.propFontSize.hidden = false;
+      els.propImageDims.hidden = true;
+      els.propFontSizeInput.value = String(round1(el.fontSize));
+      els.propFontSizeVal.textContent = `${round1(el.fontSize)} mm`;
+    } else if (el.type === 'image') {
+      els.propFontSize.hidden = true;
+      els.propImageDims.hidden = false;
+      // Capture aspect on selection (for locked mode).
+      if (el.aspectLocked && !el._aspect) el._aspect = el.w / el.h || 1;
+      els.propWInput.value = String(round1(el.w));
+      els.propHInput.value = String(round1(el.h));
+      els.propWVal.textContent = `${round1(el.w)} mm`;
+      els.propHVal.textContent = `${round1(el.h)} mm`;
+      els.propAspectToggle.textContent = el.aspectLocked ? '🔗' : '🔓';
+      els.propAspectToggle.title = el.aspectLocked
+        ? '已锁定比例（点击解锁）'
+        : '未锁定比例（点击锁定）';
+    }
+  }
 
   // --- Helpers ---
 
@@ -471,36 +577,12 @@ export function initCardEditor(els) {
       label.addEventListener('click', () => {
         selectedId = el.id;
         renderElementList();
+        renderProperties();
         drawDesigner();
       });
       row.appendChild(label);
 
       if (el.type === 'text') {
-        // Font size input (mm).
-        const sizeWrap = document.createElement('span');
-        sizeWrap.className = 'size-wrap';
-        const sizeIn = document.createElement('input');
-        sizeIn.type = 'number';
-        sizeIn.min = '2';
-        sizeIn.max = '40';
-        sizeIn.step = '0.5';
-        sizeIn.value = String(el.fontSize);
-        sizeIn.title = '字号 (mm)';
-        sizeIn.addEventListener('input', () => {
-          const v = Number(sizeIn.value);
-          if (Number.isFinite(v) && v >= 2 && v <= 40) {
-            el.fontSize = v;
-            drawDesigner();
-          }
-        });
-        sizeIn.addEventListener('click', (e) => e.stopPropagation());
-        const unit = document.createElement('span');
-        unit.className = 'unit';
-        unit.textContent = 'mm';
-        sizeWrap.appendChild(sizeIn);
-        sizeWrap.appendChild(unit);
-        row.appendChild(sizeWrap);
-
         const editBtn = document.createElement('button');
         editBtn.className = 'btn-secondary';
         editBtn.textContent = '编辑';
@@ -510,72 +592,11 @@ export function initCardEditor(els) {
       }
 
       if (el.type === 'image') {
-        // Width / height inputs (mm). Aspect lock (default true) keeps ratio.
-        const dimWrap = document.createElement('span');
-        dimWrap.className = 'dim-wrap';
-        // Ensure locked state has a fresh aspect captured from current w/h.
-        if (el.aspectLocked) el._aspect = el.w / el.h || 1;
-        const lockBtn = document.createElement('button');
-        lockBtn.className = 'btn-secondary aspect-toggle';
-        lockBtn.title = el.aspectLocked
-          ? '已锁定比例（点击解锁）'
-          : '未锁定比例（点击锁定）';
-        lockBtn.textContent = el.aspectLocked ? '🔗' : '🔓';
-        lockBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          el.aspectLocked = !el.aspectLocked;
-          if (el.aspectLocked) {
-            el._aspect = el.w / el.h || 1;
-          }
-          renderElementList();
-          drawDesigner();
-        });
-        const wInput = document.createElement('input');
-        wInput.type = 'number';
-        wInput.min = '1';
-        wInput.max = '200';
-        wInput.step = '0.5';
-        wInput.value = String(el.w);
-        wInput.title = '宽 (mm)';
-        wInput.addEventListener('click', (e) => e.stopPropagation());
-        const hInput = document.createElement('input');
-        hInput.type = 'number';
-        hInput.min = '1';
-        hInput.max = '200';
-        hInput.step = '0.5';
-        hInput.value = String(el.h);
-        hInput.title = '高 (mm)';
-        hInput.addEventListener('click', (e) => e.stopPropagation());
-        const onW = (v) => {
-          if (!Number.isFinite(v) || v < 1 || v > 200) return;
-          el.w = v;
-          if (el.aspectLocked && el._aspect) {
-            el.h = v / el._aspect;
-            hInput.value = String(round1(el.h));
-          }
-          drawDesigner();
-        };
-        const onH = (v) => {
-          if (!Number.isFinite(v) || v < 1 || v > 200) return;
-          el.h = v;
-          if (el.aspectLocked && el._aspect) {
-            el.w = v * el._aspect;
-            wInput.value = String(round1(el.w));
-          }
-          drawDesigner();
-        };
-        wInput.addEventListener('input', () => onW(Number(wInput.value)));
-        hInput.addEventListener('input', () => onH(Number(hInput.value)));
-        const wWrap = document.createElement('span');
-        wWrap.className = 'num-input';
-        wWrap.appendChild(wInput);
-        const hWrap = document.createElement('span');
-        hWrap.className = 'num-input';
-        hWrap.appendChild(hInput);
-        dimWrap.appendChild(wWrap);
-        dimWrap.appendChild(lockBtn);
-        dimWrap.appendChild(hWrap);
-        row.appendChild(dimWrap);
+        // Width / height handled by properties panel sliders; element row only shows size summary.
+        const sizeLabel = document.createElement('span');
+        sizeLabel.className = 'dim-label hint';
+        sizeLabel.textContent = `${round1(el.w)} × ${round1(el.h)} mm`;
+        row.appendChild(sizeLabel);
       }
 
       const delBtn = document.createElement('button');
@@ -586,6 +607,7 @@ export function initCardEditor(els) {
         elements = elements.filter(e => e.id !== el.id);
         if (selectedId === el.id) selectedId = null;
         renderElementList();
+        renderProperties();
         drawDesigner();
       });
       row.appendChild(delBtn);
@@ -615,6 +637,7 @@ export function initCardEditor(els) {
     dragOffset = { dx: mmX - el.x, dy: mmY - el.y };
     els.cardCanvas.setPointerCapture(e.pointerId);
     renderElementList();
+    renderProperties();
     drawDesigner();
     e.preventDefault();
   }
@@ -693,6 +716,7 @@ export function initCardEditor(els) {
       elements = [];
       selectedId = null;
       renderElementList();
+      renderProperties();
       drawDesigner();
     },
     /** Cancel any active cropper. Safe to call when not cropping. */
