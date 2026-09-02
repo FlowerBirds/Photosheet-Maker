@@ -215,7 +215,7 @@ export function initCardEditor(els) {
       y: cardSize.h / 2 - h / 2,
       width: w,
       height: h,
-      borderWidth: 0.1,
+      borderWidth: 0.2,
       borderColor: '#888888',
       fillColor: '#ffffff',
       aspectLocked: true,
