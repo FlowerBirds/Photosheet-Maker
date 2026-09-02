@@ -78,6 +78,25 @@ function renderCardCanvas(cardSize, dpi, elements, border) {
       const dw = el.w * mmToPx;
       const dh = el.h * mmToPx;
       ctx.drawImage(el.src, el.x * mmToPx, el.y * mmToPx, dw, dh);
+    } else if (el.type === 'rect') {
+      const wPx = el.width * mmToPx;
+      const hPx = el.height * mmToPx;
+      const xPx = el.x * mmToPx;
+      const yPx = el.y * mmToPx;
+      // Fill first so border sits on top.
+      ctx.fillStyle = el.fillColor || '#ffffff';
+      ctx.fillRect(xPx, yPx, wPx, hPx);
+      if (el.borderWidth > 0) {
+        ctx.strokeStyle = el.borderColor || '#888888';
+        ctx.lineWidth = Math.max(0.5, el.borderWidth * mmToPx);
+        // Inset by half the line width so the stroke stays inside the rect.
+        ctx.strokeRect(
+          xPx + ctx.lineWidth / 2,
+          yPx + ctx.lineWidth / 2,
+          Math.max(0, wPx - ctx.lineWidth),
+          Math.max(0, hPx - ctx.lineWidth)
+        );
+      }
     }
   }
 

@@ -197,6 +197,7 @@
           <div class="card-actions">
             <button id="btn-add-text"  class="btn-secondary">＋ 添加文本</button>
             <button id="btn-add-image" class="btn-secondary">＋ 添加图片</button>
+            <button id="btn-add-rect"  class="btn-secondary">＋ 添加矩形</button>
             <input  type="file" id="card-image-input" accept="image/jpeg,image/png,image/webp" class="visually-hidden" />
           </div>
           <div id="card-element-list" class="element-list"></div>
@@ -227,6 +228,33 @@
               <div class="aspect-row">
                 <button id="prop-aspect-toggle" class="btn-secondary aspect-toggle" type="button">🔗</button>
                 <span class="hint">锁定比例</span>
+              </div>
+            </div>
+
+            <!-- Rect element: width / height / border / fill -->
+            <div id="prop-rect-dims" hidden>
+              <div class="slider-row">
+                <label for="prop-rect-w-input">宽</label>
+                <input type="range" id="prop-rect-w-input" min="1" max="200" step="0.5" />
+                <span class="slider-value" id="prop-rect-w-val">15 mm</span>
+              </div>
+              <div class="slider-row">
+                <label for="prop-rect-h-input">高</label>
+                <input type="range" id="prop-rect-h-input" min="1" max="200" step="0.5" />
+                <span class="slider-value" id="prop-rect-h-val">15 mm</span>
+              </div>
+              <div class="slider-row">
+                <label for="prop-border-width-input">边框</label>
+                <input type="range" id="prop-border-width-input" min="0" max="10" step="0.1" />
+                <span class="slider-value" id="prop-border-width-val">2 mm</span>
+              </div>
+              <div class="color-row">
+                <label for="prop-border-color">边框色</label>
+                <input type="color" id="prop-border-color" value="#888888" />
+              </div>
+              <div class="color-row">
+                <label for="prop-fill-color">填充色</label>
+                <input type="color" id="prop-fill-color" value="#ffffff" />
               </div>
             </div>
           </section>

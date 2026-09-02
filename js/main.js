@@ -41,6 +41,7 @@ const dom = {
   arrangePhase:      $('card-arrange-phase'),
   btnAddText:        $('btn-add-text'),
   btnAddImage:       $('btn-add-image'),
+  btnAddRect:        $('btn-add-rect'),
   imageInput:        $('card-image-input'),
   elementList:       $('card-element-list'),
   btnComplete:       $('btn-complete-design'),
@@ -68,6 +69,16 @@ const dom = {
   propHInput:         $('prop-h-input'),
   propHVal:           $('prop-h-val'),
   propAspectToggle:   $('prop-aspect-toggle'),
+  // Rect element properties
+  propRectDims:        $('prop-rect-dims'),
+  propRectWInput:      $('prop-rect-w-input'),
+  propRectWVal:        $('prop-rect-w-val'),
+  propRectHInput:      $('prop-rect-h-input'),
+  propRectHVal:        $('prop-rect-h-val'),
+  propBorderWidthInput:$('prop-border-width-input'),
+  propBorderWidthVal:  $('prop-border-width-val'),
+  propBorderColor:     $('prop-border-color'),
+  propFillColor:       $('prop-fill-color'),
 };
 
 // ---------- State ----------
@@ -399,6 +410,16 @@ cardEditor = initCardEditor({
   propHInput:         dom.propHInput,
   propHVal:           dom.propHVal,
   propAspectToggle:   dom.propAspectToggle,
+  // Rect element properties
+  propRectDims:        dom.propRectDims,
+  propRectWInput:      dom.propRectWInput,
+  propRectWVal:        dom.propRectWVal,
+  propRectHInput:      dom.propRectHInput,
+  propRectHVal:        dom.propRectHVal,
+  propBorderWidthInput:dom.propBorderWidthInput,
+  propBorderWidthVal:  dom.propBorderWidthVal,
+  propBorderColor:     dom.propBorderColor,
+  propFillColor:       dom.propFillColor,
   // Forward radio changes back to main.js so state.arrangeOrient + refresh run.
   setArrangementOrient,
   getState:     () => ({ paperSize: state.paperSize, dpi: state.dpi }),

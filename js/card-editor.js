@@ -40,6 +40,7 @@ const DEFAULT_FONT_SIZE_MM = 5;  // mm — reasonable starting size for new text
  *   cardCanvas:   HTMLCanvasElement,
  *   btnAddText:   HTMLButtonElement,
  *   btnAddImage:  HTMLButtonElement,
+ *   btnAddRect:   HTMLButtonElement,    // rect element button
  *   imageInput:   HTMLInputElement,
  *   elementList:  HTMLElement,
  *   btnComplete:  HTMLButtonElement,
@@ -73,6 +74,16 @@ const DEFAULT_FONT_SIZE_MM = 5;  // mm — reasonable starting size for new text
  *   propHInput:         HTMLInputElement,
  *   propHVal:           HTMLElement,
  *   propAspectToggle:   HTMLButtonElement,
+   *   // Rect element properties
+   *   propRectDims:         HTMLElement,
+   *   propRectWInput:       HTMLInputElement,
+   *   propRectWVal:         HTMLElement,
+   *   propRectHInput:       HTMLInputElement,
+   *   propRectHVal:         HTMLElement,
+   *   propBorderWidthInput: HTMLInputElement,
+   *   propBorderWidthVal:   HTMLElement,
+   *   propBorderColor:      HTMLInputElement,
+   *   propFillColor:        HTMLInputElement,
  *   // State callbacks
  *   getState:     () => ({ paperSize: string, dpi: number }),
  *   setSourceItems: (items: import('./source-item.js').SourceItem[]) => void,
@@ -189,6 +200,30 @@ export function initCardEditor(els) {
   });
 
   els.btnAddImage.addEventListener('click', () => els.imageInput.click());
+
+  if (els.btnAddRect) {
+  els.btnAddRect.addEventListener('click', () => {
+    if (phase !== 'designing') return;
+    const cardSize = getCardSize();
+    const id = `e${nextId++}`;
+    // Default: 15×15 mm square centered in the card.
+    const w = 15, h = 15;
+    elements.push({
+      type: 'rect', id,
+      x: cardSize.w / 2 - w / 2,
+      y: cardSize.h / 2 - h / 2,
+      width: w,
+      height: h,
+      borderWidth: 2,
+      borderColor: '#888888',
+      fillColor: '#ffffff',
+    });
+    selectedId = id;
+    renderElementList();
+    renderProperties();
+    drawDesigner();
+  });
+  }
 
   // Arrange-orientation radios.
   document.querySelectorAll('input[name="card-arrange-orientation"]').forEach((r) => {
@@ -374,6 +409,49 @@ export function initCardEditor(els) {
     if (cur.aspectLocked) cur._aspect = cur.w / cur.h || 1;
     renderProperties();
   });
+
+  // Rect property sliders + color inputs.
+  if (els.propRectWInput) {
+    els.propRectWInput.addEventListener('input', () => {
+      const cur = elements.find(e => e.id === selectedId);
+      if (!cur || cur.type !== 'rect') return;
+      const v = clamp(Number(els.propRectWInput.value), 1, 200);
+      cur.width = v;
+      els.propRectWInput.value = String(round1(v));
+      els.propRectWVal.textContent = `${round1(v)} mm`;
+      drawDesigner();
+    });
+    els.propRectHInput.addEventListener('input', () => {
+      const cur = elements.find(e => e.id === selectedId);
+      if (!cur || cur.type !== 'rect') return;
+      const v = clamp(Number(els.propRectHInput.value), 1, 200);
+      cur.height = v;
+      els.propRectHInput.value = String(round1(v));
+      els.propRectHVal.textContent = `${round1(v)} mm`;
+      drawDesigner();
+    });
+    els.propBorderWidthInput.addEventListener('input', () => {
+      const cur = elements.find(e => e.id === selectedId);
+      if (!cur || cur.type !== 'rect') return;
+      const v = clamp(Number(els.propBorderWidthInput.value), 0, 10);
+      cur.borderWidth = v;
+      els.propBorderWidthInput.value = String(round1(v));
+      els.propBorderWidthVal.textContent = `${round1(v)} mm`;
+      drawDesigner();
+    });
+    els.propBorderColor.addEventListener('input', () => {
+      const cur = elements.find(e => e.id === selectedId);
+      if (!cur || cur.type !== 'rect') return;
+      cur.borderColor = els.propBorderColor.value || '#888888';
+      drawDesigner();
+    });
+    els.propFillColor.addEventListener('input', () => {
+      const cur = elements.find(e => e.id === selectedId);
+      if (!cur || cur.type !== 'rect') return;
+      cur.fillColor = els.propFillColor.value || '#ffffff';
+      drawDesigner();
+    });
+  }
   }
 
   /** Number clamp helper for slider values. */
@@ -391,17 +469,20 @@ export function initCardEditor(els) {
       els.propertiesSection.hidden = true;
       els.propFontSize.hidden = true;
       els.propImageDims.hidden = true;
+      if (els.propRectDims) els.propRectDims.hidden = true;
       return;
     }
     els.propertiesSection.hidden = false;
     if (el.type === 'text') {
       els.propFontSize.hidden = false;
       els.propImageDims.hidden = true;
+      if (els.propRectDims) els.propRectDims.hidden = true;
       els.propFontSizeInput.value = String(round1(el.fontSize));
       els.propFontSizeVal.textContent = `${round1(el.fontSize)} mm`;
     } else if (el.type === 'image') {
       els.propFontSize.hidden = true;
       els.propImageDims.hidden = false;
+      if (els.propRectDims) els.propRectDims.hidden = true;
       // Capture aspect on selection (for locked mode).
       if (el.aspectLocked && !el._aspect) el._aspect = el.w / el.h || 1;
       els.propWInput.value = String(round1(el.w));
@@ -412,6 +493,18 @@ export function initCardEditor(els) {
       els.propAspectToggle.title = el.aspectLocked
         ? '已锁定比例（点击解锁）'
         : '未锁定比例（点击锁定）';
+    } else if (el.type === 'rect') {
+      els.propFontSize.hidden = true;
+      els.propImageDims.hidden = true;
+      els.propRectDims.hidden = false;
+      els.propRectWInput.value = String(round1(el.width));
+      els.propRectHInput.value = String(round1(el.height));
+      els.propRectWVal.textContent = `${round1(el.width)} mm`;
+      els.propRectHVal.textContent = `${round1(el.height)} mm`;
+      els.propBorderWidthInput.value = String(round1(el.borderWidth));
+      els.propBorderWidthVal.textContent = `${round1(el.borderWidth)} mm`;
+      els.propBorderColor.value = el.borderColor || '#888888';
+      els.propFillColor.value = el.fillColor || '#ffffff';
     }
   }
 
@@ -535,6 +628,7 @@ export function initCardEditor(els) {
    */
   function elementBoxMm(el) {
     if (el.type === 'image') return { x: el.x, y: el.y, w: el.w, h: el.h };
+    if (el.type === 'rect') return { x: el.x, y: el.y, w: el.width, h: el.height };
     // Text: top-left at (x, y); measure width and height (1.2 line-height) using
     // the same font as the renderer so the hit area matches the visual box.
     const dpi = els.getState().dpi;
@@ -579,6 +673,8 @@ export function initCardEditor(els) {
       label.className = 'element-label';
       label.textContent = el.type === 'text'
         ? `文本：${(el.text || '').slice(0, 8) || '(空)'}`
+        : el.type === 'rect'
+        ? '矩形'
         : `图片`;
       label.addEventListener('click', () => {
         selectedId = el.id;

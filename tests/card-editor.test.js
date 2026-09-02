@@ -601,6 +601,142 @@ describe('card editor properties panel', () => {
     expect(rows[0].querySelector('button')).toBeTruthy();
   });
 
+  // ---------- Rect element ----------
+
+  function makePropsElsWithRect() {
+    document.body.innerHTML = `
+      <input type="file" id="card-image-input" />
+      <button id="btn-add-text"></button>
+      <button id="btn-add-image"></button>
+      <button id="btn-add-rect"></button>
+      <div id="card-element-list"></div>
+      <button id="btn-complete-design"></button>
+      <button id="btn-redesign"></button>
+      <select id="select-card-size"></select>
+      <div id="custom-card-size"></div>
+      <input type="range" id="card-w" value="90" />
+      <input type="range" id="card-h" value="54" />
+      <input type="range" id="card-border-width" value="0.1" />
+      <input type="color"   id="card-border-color" value="#888888" />
+      <span id="card-border-width-val"></span>
+      <span id="card-w-val"></span>
+      <span id="card-h-val"></span>
+      <canvas id="card-canvas"></canvas>
+      <div id="card-design-phase"></div>
+      <div id="card-arrange-phase"></div>
+      <section id="card-crop-section" hidden>
+        <img id="card-crop-img" />
+        <button id="btn-card-crop-rotate-left"></button>
+        <button id="btn-card-crop-rotate-right"></button>
+        <button id="btn-card-crop-finish"></button>
+        <button id="btn-card-crop-cancel"></button>
+      </section>
+      <section id="card-properties-section" hidden>
+        <div id="prop-font-size" hidden>
+          <input type="range" id="prop-font-size-input" min="2" max="40" step="0.5" />
+          <span id="prop-font-size-val"></span>
+        </div>
+        <div id="prop-image-dims" hidden>
+          <input type="range" id="prop-w-input" min="1" max="200" step="0.5" />
+          <span id="prop-w-val"></span>
+          <input type="range" id="prop-h-input" min="1" max="200" step="0.5" />
+          <span id="prop-h-val"></span>
+          <button id="prop-aspect-toggle"></button>
+        </div>
+        <div id="prop-rect-dims" hidden>
+          <input type="range" id="prop-rect-w-input" min="1" max="200" step="0.5" />
+          <span id="prop-rect-w-val"></span>
+          <input type="range" id="prop-rect-h-input" min="1" max="200" step="0.5" />
+          <span id="prop-rect-h-val"></span>
+          <input type="range" id="prop-border-width-input" min="0" max="10" step="0.1" />
+          <span id="prop-border-width-val"></span>
+          <input type="color" id="prop-border-color" value="#888888" />
+          <input type="color" id="prop-fill-color" value="#ffffff" />
+        </div>
+      </section>
+    `;
+    return {
+      designPanel:  document.getElementById('card-design-phase'),
+      cardCanvas:   document.getElementById('card-canvas'),
+      btnAddText:   document.getElementById('btn-add-text'),
+      btnAddImage:  document.getElementById('btn-add-image'),
+      btnAddRect:   document.getElementById('btn-add-rect'),
+      imageInput:   document.getElementById('card-image-input'),
+      elementList:  document.getElementById('card-element-list'),
+      btnComplete:  document.getElementById('btn-complete-design'),
+      btnRedesign:  document.getElementById('btn-redesign'),
+      selectSize:   document.getElementById('select-card-size'),
+      customRow:    document.getElementById('custom-card-size'),
+      cardW:        document.getElementById('card-w'),
+      cardH:        document.getElementById('card-h'),
+      cardBorderWidth: document.getElementById('card-border-width'),
+      cardBorderColor: document.getElementById('card-border-color'),
+      cardBorderWidthVal: document.getElementById('card-border-width-val'),
+      cardWVal: document.getElementById('card-w-val'),
+      cardHVal: document.getElementById('card-h-val'),
+      cardCropSection:    document.getElementById('card-crop-section'),
+      cardCropImg:        document.getElementById('card-crop-img'),
+      btnCardCropRotateL: document.getElementById('btn-card-crop-rotate-left'),
+      btnCardCropRotateR: document.getElementById('btn-card-crop-rotate-right'),
+      btnCardCropFinish:  document.getElementById('btn-card-crop-finish'),
+      btnCardCropCancel:  document.getElementById('btn-card-crop-cancel'),
+      propertiesSection: document.getElementById('card-properties-section'),
+      propFontSize:      document.getElementById('prop-font-size'),
+      propFontSizeInput: document.getElementById('prop-font-size-input'),
+      propFontSizeVal:   document.getElementById('prop-font-size-val'),
+      propImageDims:     document.getElementById('prop-image-dims'),
+      propWInput:        document.getElementById('prop-w-input'),
+      propWVal:          document.getElementById('prop-w-val'),
+      propHInput:        document.getElementById('prop-h-input'),
+      propHVal:          document.getElementById('prop-h-val'),
+      propAspectToggle:  document.getElementById('prop-aspect-toggle'),
+      propRectDims:      document.getElementById('prop-rect-dims'),
+      propRectWInput:    document.getElementById('prop-rect-w-input'),
+      propRectWVal:      document.getElementById('prop-rect-w-val'),
+      propRectHInput:    document.getElementById('prop-rect-h-input'),
+      propRectHVal:      document.getElementById('prop-rect-h-val'),
+      propBorderWidthInput: document.getElementById('prop-border-width-input'),
+      propBorderWidthVal:   document.getElementById('prop-border-width-val'),
+      propBorderColor:    document.getElementById('prop-border-color'),
+      propFillColor:      document.getElementById('prop-fill-color'),
+    };
+  }
+
+  function initRectEditor() {
+    return initCardEditor({
+      ...makePropsElsWithRect(),
+      getState: () => ({ dpi: 300 }),
+      setSourceItems: () => {},
+      setPhase: () => {},
+      requestRefresh: () => {},
+    });
+  }
+
+  it('add-rect button creates a square rect element with sensible defaults', () => {
+    initRectEditor();
+    document.getElementById('btn-add-rect').click();
+    const rows = document.getElementById('card-element-list').querySelectorAll('.element-row');
+    expect(rows.length).toBe(1);
+    expect(rows[0].textContent).toContain('矩形');
+  });
+
+  it('selecting a rect shows the rect-dims panel and hides font-size + image-dims', () => {
+    initRectEditor();
+    document.getElementById('btn-add-rect').click();
+    expect(document.getElementById('prop-rect-dims').hidden).toBe(false);
+    expect(document.getElementById('prop-font-size').hidden).toBe(true);
+    expect(document.getElementById('prop-image-dims').hidden).toBe(true);
+  });
+
+  it('rect width slider updates the displayed value', () => {
+    initRectEditor();
+    document.getElementById('btn-add-rect').click();
+    const slider = document.getElementById('prop-rect-w-input');
+    slider.value = '40';
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(document.getElementById('prop-rect-w-val').textContent).toBe('40 mm');
+  });
+
   it('switching selected element (text → image) refreshes the panel content', () => {
     const editor = initPropsEditor();
     document.getElementById('btn-add-text').click();
