@@ -113,8 +113,8 @@ export function initCardEditor(els) {
   let selectedId = null;            // currently selected element id
   let nextId = 1;
   let dragOffset = null;            // { dx, dy } in mm during drag
-  // Card-level border. Default: 0.1mm gray (~1px at 350dpi).
-  const border = { width: 0.1, color: '#888888' };
+  // Card-level border. Default: 0.2mm gray.
+  const border = { width: 0.2, color: '#888888' };
   // Crop state: null when idle; { cw, sourceCanvas } while cropping.
   let cropState = null;
   // Factory (overridable for tests).
