@@ -389,6 +389,7 @@ cardEditor = initCardEditor({
   cardCanvas:   dom.cardCanvas,
   btnAddText:   dom.btnAddText,
   btnAddImage:  dom.btnAddImage,
+  btnAddRect:   dom.btnAddRect,
   imageInput:   dom.imageInput,
   elementList:  dom.elementList,
   btnComplete:  dom.btnComplete,
