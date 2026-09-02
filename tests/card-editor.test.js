@@ -588,6 +588,19 @@ describe('card editor properties panel', () => {
     expect(btn.textContent).toBe(before);
   });
 
+  it('image element row in elementList shows only label + delete (no size summary)', () => {
+    const editor = initPropsEditor();
+    addImageElement(editor);
+    const rows = document.getElementById('card-element-list').querySelectorAll('.element-row');
+    expect(rows.length).toBe(1);
+    // Row text should NOT contain the W × H mm size summary (now shown by properties panel sliders).
+    expect(rows[0].textContent).not.toMatch(/\d+(\.\d+)?\s*×\s*\d+(\.\d+)?\s*mm/);
+    // Row should still show the "图片" label so user can identify the element.
+    expect(rows[0].textContent).toContain('图片');
+    // Row should still have the delete button.
+    expect(rows[0].querySelector('button')).toBeTruthy();
+  });
+
   it('switching selected element (text → image) refreshes the panel content', () => {
     const editor = initPropsEditor();
     document.getElementById('btn-add-text').click();

@@ -598,11 +598,7 @@ export function initCardEditor(els) {
       }
 
       if (el.type === 'image') {
-        // Width / height handled by properties panel sliders; element row only shows size summary.
-        const sizeLabel = document.createElement('span');
-        sizeLabel.className = 'dim-label hint';
-        sizeLabel.textContent = `${round1(el.w)} × ${round1(el.h)} mm`;
-        row.appendChild(sizeLabel);
+        // Width / height handled by properties panel sliders; element row only shows the label + delete.
       }
 
       const delBtn = document.createElement('button');
