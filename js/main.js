@@ -399,6 +399,8 @@ cardEditor = initCardEditor({
   propHInput:         dom.propHInput,
   propHVal:           dom.propHVal,
   propAspectToggle:   dom.propAspectToggle,
+  // Forward radio changes back to main.js so state.arrangeOrient + refresh run.
+  setArrangementOrient,
   getState:     () => ({ paperSize: state.paperSize, dpi: state.dpi }),
   setSourceItems: (items) => { state.sourceItems = items; },
   setPhase: (phase) => {

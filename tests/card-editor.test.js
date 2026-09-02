@@ -379,6 +379,25 @@ describe('card editor arrange orientation', () => {
     editor.setArrangementOrient('landscape');
     expect(editor.getArrangementOrient()).toBe('landscape');
   });
+
+  it('changing arrange-orientation radio calls setArrangementOrient callback', () => {
+    const calls = [];
+    const setArrangementOrient = (v) => calls.push(v);
+    initCardEditor({
+      ...makeArrEls(),
+      getState: () => ({ dpi: 300 }),
+      setSourceItems: () => {},
+      setPhase: () => {},
+      requestRefresh: () => {},
+      setArrangementOrient,
+    });
+    const landscapeRadio = document.querySelector(
+      'input[name="card-arrange-orientation"][value="landscape"]'
+    );
+    landscapeRadio.checked = true;
+    landscapeRadio.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(calls).toEqual(['landscape']);
+  });
 });
 
 // ---------- Properties panel ----------

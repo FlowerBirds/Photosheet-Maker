@@ -78,6 +78,10 @@ const DEFAULT_FONT_SIZE_MM = 5;  // mm — reasonable starting size for new text
  *   setSourceItems: (items: import('./source-item.js').SourceItem[]) => void,
  *   setPhase:     (phase: 'designing'|'arranging') => void,
  *   requestRefresh: () => void,
+ *   // Called when user toggles the arrange-orientation radio. Lets the host
+ *   (main.js) keep `state.arrangeOrient` in sync and trigger a refresh.
+ *   Optional: omitted in older tests.
+ *   setArrangementOrient?: (value: 'portrait'|'landscape') => void,
  *   // Override (tests)
  *   createCardCropper?: typeof import('./card-cropper.js').createCardCropper,
  * }} els
@@ -191,6 +195,8 @@ export function initCardEditor(els) {
     r.addEventListener('change', () => {
       if (!r.checked) return;
       arrangeOrient = r.value;
+      // Propagate to host so state.arrangeOrient + refresh() run.
+      if (els.setArrangementOrient) els.setArrangementOrient(arrangeOrient);
     });
   });
 
