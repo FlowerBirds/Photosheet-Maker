@@ -81,15 +81,6 @@ const dom = {
   propFillColor:       $('prop-fill-color'),
 };
 
-// DEBUG: confirm DOM is wired up before initCardEditor runs.
-console.log('[Photosheet] DOM ref check:', {
-  btnAddText:    !!$('btn-add-text'),
-  btnAddImage:   !!$('btn-add-image'),
-  btnAddRect:    !!$('btn-add-rect'),
-  cardCanvas:    !!$('card-canvas'),
-  elementList:   !!$('card-element-list'),
-});
-
 // ---------- State ----------
 const state = {
   status: 'INITIAL',  // INITIAL | CROPPING | READY | EXPORTING
