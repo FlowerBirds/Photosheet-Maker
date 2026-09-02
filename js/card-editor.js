@@ -202,7 +202,9 @@ export function initCardEditor(els) {
   els.btnAddImage.addEventListener('click', () => els.imageInput.click());
 
   if (els.btnAddRect) {
+  console.log('[Photosheet] btnAddRect handler attached');
   els.btnAddRect.addEventListener('click', () => {
+    console.log('[Photosheet] btnAddRect clicked, phase=', phase, ', elements.length=', elements.length);
     if (phase !== 'designing') return;
     const cardSize = getCardSize();
     const id = `e${nextId++}`;
@@ -218,12 +220,15 @@ export function initCardEditor(els) {
       borderColor: '#888888',
       fillColor: '#ffffff',
     });
+    console.log('[Photosheet] rect added, new elements.length=', elements.length);
     selectedId = id;
     renderElementList();
     renderProperties();
     drawDesigner();
   });
-  }
+} else {
+  console.warn('[Photosheet] btnAddRect missing — click handler NOT attached');
+}
 
   // Arrange-orientation radios.
   document.querySelectorAll('input[name="card-arrange-orientation"]').forEach((r) => {
