@@ -154,6 +154,21 @@ button { font: inherit; }
   font-size: 13px;
 }
 
+/* Card properties panel: visible only when an element is selected. */
+.properties-section {
+  margin-top: 8px;
+}
+.aspect-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.aspect-row .aspect-toggle {
+  font-size: 14px;
+  padding: 2px 8px;
+}
+
 /* Toggle row: a full-width clickable checkbox row. */
 .toggle-row {
   display: flex;
