@@ -30,7 +30,6 @@ export function renderPreview(canvas, params, paperMap, sourceItems) {
     clearCanvas(canvas);
     return null;
   }
-  const sourceSize = sourceItems[0].size;
   const arrangeOrient = params.arrangeOrient || 'portrait';
   const layoutSize = arrangedSize(sourceItems[0], arrangeOrient);
   const paper = paperMap[params.paperSize];
@@ -62,8 +61,6 @@ export function renderPreview(canvas, params, paperMap, sourceItems) {
 
   const layout = calculateLayout(layoutSize, paper, params.margin, params.gap);
   const zoom = params.zoom || 1;
-  const drawW = layoutSize.w * zoom;
-  const drawH = layoutSize.h * zoom;
 
   if (params.drawing === 'repeat') {
     // Photo / card-template mode: cycle the source items to fill every position.
@@ -110,9 +107,11 @@ function clearCanvas(canvas) {
 
 /**
  * Draw an item at the given position, rotating 90° if designedSize != layoutSize.
+ * Image is drawn centered on the cell (zoom grows/shrinks symmetrically around
+ * the cell center, not the top-left corner).
  * @param {CanvasRenderingContext2D} ctx
  * @param {{canvas:HTMLCanvasElement, size:{w:number,h:number}}} item
- * @param {{x:number,y:number}} pos      - position in mm on the layout
+ * @param {{x:number,y:number}} pos      - position in mm on the layout (top-left of cell)
  * @param {number} scale                  - mm → display px
  * @param {{w:number,h:number}} layoutSize - layout (drawn) size in mm
  * @param {number} zoom                   - per-photo zoom multiplier (1 for cards)
@@ -122,14 +121,19 @@ function drawItemAtPosition(ctx, item, pos, scale, layoutSize, zoom) {
   const sameOrient = designedSize.w === layoutSize.w && designedSize.h === layoutSize.h;
   const wPx = layoutSize.w * zoom * scale;
   const hPx = layoutSize.h * zoom * scale;
+  // Cell center in screen px. Designed dimensions define the cell; layout may differ.
+  const cx = (pos.x + designedSize.w / 2) * scale;
+  const cy = (pos.y + designedSize.h / 2) * scale;
   if (sameOrient) {
-    ctx.drawImage(item.canvas, pos.x * scale, pos.y * scale, wPx, hPx);
+    ctx.drawImage(item.canvas, cx - wPx / 2, cy - hPx / 2, wPx, hPx);
   } else {
-    // Rotate 90°: translate to top-right of target, rotate, draw with swapped source dims.
+    // Rotate 90° around the cell center.
     ctx.save();
-    ctx.translate(pos.x * scale + wPx, pos.y * scale);
+    ctx.translate(cx, cy);
     ctx.rotate(Math.PI / 2);
-    ctx.drawImage(item.canvas, 0, 0, hPx, wPx);
+    // After rotate, local x → screen +y, local y → screen −x.
+    // Drawing source at (-hPx/2, -wPx/2) places its center at local origin (=cell center).
+    ctx.drawImage(item.canvas, -hPx / 2, -wPx / 2, hPx, wPx);
     ctx.restore();
   }
 }

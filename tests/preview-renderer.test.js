@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { renderPreview } from '../js/preview-renderer.js';
 import { SourceItem } from '../js/source-item.js';
 import { PAPER_SIZES } from '../js/constants.js';
@@ -77,6 +77,30 @@ describe('renderPreview — arrange orientation', () => {
     expect(layout.count).toBe(1);
     expect(layout.cols).toBe(1);
     expect(layout.rows).toBe(1);
+  });
+
+  it('zoom centers the photo on cell center, not top-left corner', () => {
+    // Custom paper 15×15 mm, margin 0, gap 0, item 5×5 → grid 3×3.
+    // Cell at (5, 5) has center (7.5, 7.5) mm.
+    // Preview scale = 600/15 = 40 px/mm.
+    // zoom=2 → drawn wPx = hPx = 5*2*40 = 400; centered on cell → top-left = (100, 100).
+    const c = document.createElement('canvas');
+    const item = makeItem(5, 5);
+    const ctx = c.getContext('2d');
+    const drawImageSpy = vi.spyOn(ctx, 'drawImage');
+    renderPreview(
+      c,
+      { paperSize: 'TINY', margin: { top: 0, bottom: 0, left: 0, right: 0 },
+        gap: { h: 0, v: 0 }, drawing: 'repeat', zoom: 2,
+        showCropMarks: false, showFooter: false },
+      { TINY: { w: 15, h: 15 } },
+      [item]
+    );
+    // Find a drawImage call for cell at (5, 5): x = y = 100, w = h = 400.
+    const matched = drawImageSpy.mock.calls.find(args =>
+      args[1] === 100 && args[2] === 100 && args[3] === 400 && args[4] === 400
+    );
+    expect(matched).toBeTruthy();
   });
 
   it('uses designedSize when arrangeOrient matches item orientation', () => {

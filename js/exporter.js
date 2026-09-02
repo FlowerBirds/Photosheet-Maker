@@ -29,7 +29,6 @@ export async function exportImage(params, paperMap) {
   if (!sourceItems || sourceItems.length === 0) {
     throw new Error('没有可导出的内容');
   }
-  const sourceSize = sourceItems[0].size;
   const arrangeOrient = arrangeOrientParam || 'portrait';
   const layoutSize = arrangedSize(sourceItems[0], arrangeOrient);
   const paper = paperMap[paperSize];
@@ -47,8 +46,6 @@ export async function exportImage(params, paperMap) {
   ctx.fillRect(0, 0, canvasW, canvasH);
 
   const layout = calculateLayout(layoutSize, paper, margin, gap);
-  const drawW = layoutSize.w * zoom;
-  const drawH = layoutSize.h * zoom;
 
   if (drawing === 'repeat') {
     // Photo / card-template mode: cycle source items to fill every position.
@@ -109,22 +106,36 @@ function triggerDownload(blob, filename) {
 
 /**
  * Draw an item at mm coords on the export canvas, rotating 90° if
- * designedSize != layoutSize.
+ * designedSize != layoutSize. Image is centered on the cell so zoom grows
+ * symmetrically around the cell center, not the top-left corner.
  */
 function drawExportItem(ctx, item, pos, mmToPx, layoutSize, zoom) {
   const designedSize = item.size;
   const sameOrient = designedSize.w === layoutSize.w && designedSize.h === layoutSize.h;
-  const xPx = Math.round(pos.x * mmToPx);
-  const yPx = Math.round(pos.y * mmToPx);
   const wPx = Math.round(layoutSize.w * zoom * mmToPx);
   const hPx = Math.round(layoutSize.h * zoom * mmToPx);
+  // Cell center in mm; the cell is defined by designed size (layout may differ).
+  const cxPx = Math.round((pos.x + designedSize.w / 2) * mmToPx);
+  const cyPx = Math.round((pos.y + designedSize.h / 2) * mmToPx);
   if (sameOrient) {
-    ctx.drawImage(item.canvas, xPx, yPx, wPx, hPx);
+    ctx.drawImage(
+      item.canvas,
+      cxPx - Math.round(wPx / 2),
+      cyPx - Math.round(hPx / 2),
+      wPx,
+      hPx
+    );
   } else {
     ctx.save();
-    ctx.translate(xPx + wPx, yPx);
+    ctx.translate(cxPx, cyPx);
     ctx.rotate(Math.PI / 2);
-    ctx.drawImage(item.canvas, 0, 0, hPx, wPx);
+    ctx.drawImage(
+      item.canvas,
+      -Math.round(hPx / 2),
+      -Math.round(wPx / 2),
+      hPx,
+      wPx
+    );
     ctx.restore();
   }
 }
