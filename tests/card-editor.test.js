@@ -652,6 +652,7 @@ describe('card editor properties panel', () => {
           <span id="prop-border-width-val"></span>
           <input type="color" id="prop-border-color" value="#888888" />
           <input type="color" id="prop-fill-color" value="#ffffff" />
+          <button id="prop-rect-aspect-toggle"></button>
         </div>
       </section>
     `;
@@ -699,6 +700,7 @@ describe('card editor properties panel', () => {
       propBorderWidthVal:   document.getElementById('prop-border-width-val'),
       propBorderColor:    document.getElementById('prop-border-color'),
       propFillColor:      document.getElementById('prop-fill-color'),
+      propRectAspectToggle: document.getElementById('prop-rect-aspect-toggle'),
     };
   }
 
@@ -735,6 +737,47 @@ describe('card editor properties panel', () => {
     slider.value = '40';
     slider.dispatchEvent(new Event('input', { bubbles: true }));
     expect(document.getElementById('prop-rect-w-val').textContent).toBe('40 mm');
+  });
+
+  it('rect aspect-lock is on by default; toggle button mirrors height when width changes', () => {
+    initRectEditor();
+    document.getElementById('btn-add-rect').click();
+    const btn = document.getElementById('prop-rect-aspect-toggle');
+    // Default: lock icon = 🔗.
+    expect(btn.textContent).toBe('🔗');
+    // Change width from 15 to 40 → height (originally 15) mirrors to 40 too (square).
+    const wSlider = document.getElementById('prop-rect-w-input');
+    wSlider.value = '40';
+    wSlider.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(document.getElementById('prop-rect-w-val').textContent).toBe('40 mm');
+    expect(document.getElementById('prop-rect-h-val').textContent).toBe('40 mm');
+  });
+
+  it('rect aspect-toggle button flips lock icon', () => {
+    initRectEditor();
+    document.getElementById('btn-add-rect').click();
+    const btn = document.getElementById('prop-rect-aspect-toggle');
+    const before = btn.textContent;
+    btn.click();
+    const after = btn.textContent;
+    expect(before).not.toBe(after);
+    btn.click();
+    expect(btn.textContent).toBe(before);
+  });
+
+  it('rect aspect-unlocked: changing width does not mirror height', () => {
+    initRectEditor();
+    document.getElementById('btn-add-rect').click();
+    // Unlock.
+    document.getElementById('prop-rect-aspect-toggle').click();
+    const wSlider = document.getElementById('prop-rect-w-input');
+    const hSlider = document.getElementById('prop-rect-h-input');
+    wSlider.value = '40';
+    wSlider.dispatchEvent(new Event('input', { bubbles: true }));
+    // Height should stay at its original 15 mm, NOT mirror to 40.
+    expect(document.getElementById('prop-rect-w-val').textContent).toBe('40 mm');
+    expect(document.getElementById('prop-rect-h-val').textContent).toBe('15 mm');
+    expect(hSlider.value).toBe('15');
   });
 
   it('switching selected element (text → image) refreshes the panel content', () => {

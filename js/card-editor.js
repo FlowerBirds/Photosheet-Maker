@@ -84,6 +84,7 @@ const DEFAULT_FONT_SIZE_MM = 5;  // mm — reasonable starting size for new text
    *   propBorderWidthVal:   HTMLElement,
    *   propBorderColor:      HTMLInputElement,
    *   propFillColor:        HTMLInputElement,
+   *   propRectAspectToggle: HTMLButtonElement,
  *   // State callbacks
  *   getState:     () => ({ paperSize: string, dpi: number }),
  *   setSourceItems: (items: import('./source-item.js').SourceItem[]) => void,
@@ -217,6 +218,8 @@ export function initCardEditor(els) {
       borderWidth: 0.1,
       borderColor: '#888888',
       fillColor: '#ffffff',
+      aspectLocked: true,
+      _aspect: w / h,
     });
     selectedId = id;
     renderElementList();
@@ -417,6 +420,11 @@ export function initCardEditor(els) {
       if (!cur || cur.type !== 'rect') return;
       const v = clamp(Number(els.propRectWInput.value), 1, 200);
       cur.width = v;
+      if (cur.aspectLocked && cur._aspect) {
+        cur.height = v / cur._aspect;
+        els.propRectHInput.value = String(round1(cur.height));
+        els.propRectHVal.textContent = `${round1(cur.height)} mm`;
+      }
       els.propRectWInput.value = String(round1(v));
       els.propRectWVal.textContent = `${round1(v)} mm`;
       drawDesigner();
@@ -426,10 +434,24 @@ export function initCardEditor(els) {
       if (!cur || cur.type !== 'rect') return;
       const v = clamp(Number(els.propRectHInput.value), 1, 200);
       cur.height = v;
+      if (cur.aspectLocked && cur._aspect) {
+        cur.width = v * cur._aspect;
+        els.propRectWInput.value = String(round1(cur.width));
+        els.propRectWVal.textContent = `${round1(cur.width)} mm`;
+      }
       els.propRectHInput.value = String(round1(v));
       els.propRectHVal.textContent = `${round1(v)} mm`;
       drawDesigner();
     });
+    if (els.propRectAspectToggle) {
+      els.propRectAspectToggle.addEventListener('click', () => {
+        const cur = elements.find(e => e.id === selectedId);
+        if (!cur || cur.type !== 'rect') return;
+        cur.aspectLocked = !cur.aspectLocked;
+        if (cur.aspectLocked) cur._aspect = cur.width / cur.height || 1;
+        renderProperties();
+      });
+    }
     els.propBorderWidthInput.addEventListener('input', () => {
       const cur = elements.find(e => e.id === selectedId);
       if (!cur || cur.type !== 'rect') return;
@@ -497,6 +519,7 @@ export function initCardEditor(els) {
       els.propFontSize.hidden = true;
       els.propImageDims.hidden = true;
       els.propRectDims.hidden = false;
+      if (el.aspectLocked && !el._aspect) el._aspect = el.width / el.height || 1;
       els.propRectWInput.value = String(round1(el.width));
       els.propRectHInput.value = String(round1(el.height));
       els.propRectWVal.textContent = `${round1(el.width)} mm`;
@@ -505,6 +528,12 @@ export function initCardEditor(els) {
       els.propBorderWidthVal.textContent = `${round1(el.borderWidth)} mm`;
       els.propBorderColor.value = el.borderColor || '#888888';
       els.propFillColor.value = el.fillColor || '#ffffff';
+      if (els.propRectAspectToggle) {
+        els.propRectAspectToggle.textContent = el.aspectLocked ? '🔗' : '🔓';
+        els.propRectAspectToggle.title = el.aspectLocked
+          ? '已锁定比例（点击解锁）'
+          : '未锁定比例（点击锁定）';
+      }
     }
   }
 
