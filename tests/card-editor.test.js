@@ -431,13 +431,13 @@ function makePropsEls() {
     </section>
     <section id="card-properties-section" hidden>
       <div id="prop-font-size" hidden>
-        <input type="range" id="prop-font-size-input" min="2" max="40" step="0.5" />
+        <input type="range" id="prop-font-size-input" min="2" max="40" step="0.1" />
         <span id="prop-font-size-val"></span>
       </div>
       <div id="prop-image-dims" hidden>
-        <input type="range" id="prop-w-input" min="1" max="200" step="0.5" />
+        <input type="range" id="prop-w-input" min="1" max="200" step="0.1" />
         <span id="prop-w-val"></span>
-        <input type="range" id="prop-h-input" min="1" max="200" step="0.5" />
+        <input type="range" id="prop-h-input" min="1" max="200" step="0.1" />
         <span id="prop-h-val"></span>
         <button id="prop-aspect-toggle"></button>
       </div>
@@ -633,20 +633,20 @@ describe('card editor properties panel', () => {
       </section>
       <section id="card-properties-section" hidden>
         <div id="prop-font-size" hidden>
-          <input type="range" id="prop-font-size-input" min="2" max="40" step="0.5" />
+          <input type="range" id="prop-font-size-input" min="2" max="40" step="0.1" />
           <span id="prop-font-size-val"></span>
         </div>
         <div id="prop-image-dims" hidden>
-          <input type="range" id="prop-w-input" min="1" max="200" step="0.5" />
+          <input type="range" id="prop-w-input" min="1" max="200" step="0.1" />
           <span id="prop-w-val"></span>
-          <input type="range" id="prop-h-input" min="1" max="200" step="0.5" />
+          <input type="range" id="prop-h-input" min="1" max="200" step="0.1" />
           <span id="prop-h-val"></span>
           <button id="prop-aspect-toggle"></button>
         </div>
         <div id="prop-rect-dims" hidden>
-          <input type="range" id="prop-rect-w-input" min="1" max="200" step="0.5" />
+          <input type="range" id="prop-rect-w-input" min="1" max="200" step="0.1" />
           <span id="prop-rect-w-val"></span>
-          <input type="range" id="prop-rect-h-input" min="1" max="200" step="0.5" />
+          <input type="range" id="prop-rect-h-input" min="1" max="200" step="0.1" />
           <span id="prop-rect-h-val"></span>
           <input type="range" id="prop-border-width-input" min="0" max="10" step="0.1" />
           <span id="prop-border-width-val"></span>
