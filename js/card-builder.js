@@ -1,5 +1,5 @@
 import { SourceItem } from './source-item.js';
-import { CARD_MAX_PX, DEFAULT_FIELD_COLOR } from './constants.js';
+import { CARD_MAX_PX, DEFAULT_FIELD_COLOR, BORDER_DASH_PATTERNS_MM } from './constants.js';
 
 /**
  * Compute the effective render dpi for a batch of cards.
@@ -89,6 +89,24 @@ function renderCardCanvas(cardSize, dpi, elements, border) {
       if (el.borderWidth > 0) {
         ctx.strokeStyle = el.borderColor || '#888888';
         ctx.lineWidth = Math.max(0.5, el.borderWidth * mmToPx);
+
+        // Border type → line dash pattern. solid = no dash; others get a
+        // scaled-on-render mm pattern. dotted uses round caps so short
+        // segments render as circles.
+        const borderType = el.borderType || 'solid';
+        const patternMm = BORDER_DASH_PATTERNS_MM[borderType];
+        if (patternMm) {
+          ctx.setLineDash(patternMm.map(mm => mm * mmToPx));
+          ctx.lineCap  = borderType === 'dotted' ? 'round' : 'butt';
+          ctx.lineJoin = borderType === 'dotted' ? 'round' : 'miter';
+        } else {
+          // Reset so a previous rect's dash doesn't leak into the card-level
+          // border (which always renders solid) or the next element.
+          ctx.setLineDash([]);
+          ctx.lineCap  = 'butt';
+          ctx.lineJoin = 'miter';
+        }
+
         // Inset by half the line width so the stroke stays inside the rect.
         ctx.strokeRect(
           xPx + ctx.lineWidth / 2,

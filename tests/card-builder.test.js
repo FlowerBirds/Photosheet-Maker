@@ -113,6 +113,77 @@ describe('CardSourceItem', () => {
       expect(d[2]).toBe(255);
     }
   });
+
+  // ---------- Rect border type ----------
+
+  /**
+   * Count colored (non-white) pixels along the top border strip of a rect
+   * element rendered at (5, 5) with size 20×20 mm and 0.2 mm border.
+   * Used to discriminate solid / dashed / dotted / dashDot borders.
+   */
+  function countBorderTopStrip(rectEl, dpi = 350) {
+    const item = new CardSourceItem({ w: 50, h: 50 }, dpi, [rectEl]);
+    const ctx = item.canvas.getContext('2d');
+    const mmToPx = dpi / 25.4;
+    const rectX = Math.round(5 * mmToPx);
+    const rectY = Math.round(5 * mmToPx);
+    const rectW = Math.round(20 * mmToPx);
+    const borderPx = Math.max(0.5, 0.2 * mmToPx);
+    const stripY = Math.round(rectY + borderPx / 2);
+    const stripH = Math.max(1, Math.ceil(borderPx));
+    const data = ctx.getImageData(rectX, stripY, rectW, stripH).data;
+    let colored = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i] < 250 || data[i+1] < 250 || data[i+2] < 250) colored++;
+    }
+    return colored;
+  }
+
+  const baseRect = {
+    type: 'rect', id: 'r1',
+    x: 5, y: 5, width: 20, height: 20,
+    borderWidth: 0.2, borderColor: '#000000', fillColor: '#ffffff',
+  };
+
+  it('rect with borderType=solid renders continuous top border (baseline)', () => {
+    const count = countBorderTopStrip({ ...baseRect, borderType: 'solid' });
+    // Solid stroke spans the full rect width — expect a high pixel count.
+    expect(count).toBeGreaterThan(200);
+  });
+
+  it('rect with borderType=dashed has fewer colored pixels than solid', () => {
+    const solid  = countBorderTopStrip({ ...baseRect, borderType: 'solid' });
+    const dashed = countBorderTopStrip({ ...baseRect, borderType: 'dashed' });
+    // Dashed pattern introduces gaps → strictly fewer colored pixels.
+    expect(dashed).toBeLessThan(solid);
+    expect(dashed).toBeGreaterThan(0);
+  });
+
+  it('rect with borderType=dotted has fewer colored pixels than solid', () => {
+    const solid  = countBorderTopStrip({ ...baseRect, borderType: 'solid' });
+    const dotted = countBorderTopStrip({ ...baseRect, borderType: 'dotted' });
+    // Dots introduce gaps in the stroke. With round lineCap each dot extends
+    // ~lineWidth on each end, so jsdom renders ~66% of solid pixel count —
+    // threshold 0.75 leaves margin for renderer variance.
+    expect(dotted).toBeLessThan(solid * 0.75);
+    expect(dotted).toBeGreaterThan(0);
+  });
+
+  it('rect with borderType=dashDot produces a pattern distinct from dashed', () => {
+    const dashed  = countBorderTopStrip({ ...baseRect, borderType: 'dashed' });
+    const dashDot = countBorderTopStrip({ ...baseRect, borderType: 'dashDot' });
+    // dashDot has more "off" pixels per period → fewer colored pixels than dashed.
+    expect(dashDot).toBeLessThan(dashed);
+    expect(dashDot).toBeGreaterThan(0);
+  });
+
+  it('rect without borderType field falls back to solid (backward compat)', () => {
+    // Omit borderType entirely — old saved cards lack the field.
+    const { borderType, ...legacy } = baseRect;
+    const legacyCount = countBorderTopStrip(legacy);
+    const solidCount  = countBorderTopStrip({ ...baseRect, borderType: 'solid' });
+    expect(legacyCount).toBe(solidCount);
+  });
 });
 
 describe('createCardImageSource', () => {
