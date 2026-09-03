@@ -79,6 +79,7 @@ const dom = {
   propBorderWidthVal:  $('prop-border-width-val'),
   propBorderColor:     $('prop-border-color'),
   propFillColor:       $('prop-fill-color'),
+  propBorderType:      $('prop-border-type'),
   propRectAspectToggle:$('prop-rect-aspect-toggle'),
 };
 
@@ -422,6 +423,7 @@ cardEditor = initCardEditor({
   propBorderWidthVal:  dom.propBorderWidthVal,
   propBorderColor:     dom.propBorderColor,
   propFillColor:       dom.propFillColor,
+  propBorderType:      dom.propBorderType,
   propRectAspectToggle:dom.propRectAspectToggle,
   // Forward radio changes back to main.js so state.arrangeOrient + refresh run.
   setArrangementOrient,
