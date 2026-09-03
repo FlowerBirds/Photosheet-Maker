@@ -184,6 +184,37 @@ describe('CardSourceItem', () => {
     const solidCount  = countBorderTopStrip({ ...baseRect, borderType: 'solid' });
     expect(legacyCount).toBe(solidCount);
   });
+
+  it('dashed rect does not leak setLineDash into card-level border', () => {
+    // Card-level border lives at the very edge of the canvas (inset by bw/2).
+    // If setLineDash from the dashed rect leaks, the card-level border
+    // would also become dashed → fewer colored pixels along its strip.
+    const itemDashed = new CardSourceItem(
+      { w: 50, h: 50 }, 350,
+      [{ ...baseRect, borderType: 'dashed' }],
+      { width: 0.5, color: '#000000' }
+    );
+    const itemSolid = new CardSourceItem(
+      { w: 50, h: 50 }, 350,
+      [{ ...baseRect, borderType: 'solid' }],
+      { width: 0.5, color: '#000000' }
+    );
+    const ctxD = itemDashed.canvas.getContext('2d');
+    const ctxS = itemSolid.canvas.getContext('2d');
+    // Sample card-level border at the top edge (1px high strip just inside
+    // the 0.5mm border). bw=0.5mm at 350dpi ≈ 6.89px → sample rows 4..6.
+    const dataD = ctxD.getImageData(0, 4, itemDashed.canvas.width, 2).data;
+    const dataS = ctxS.getImageData(0, 4, itemSolid.canvas.width, 2).data;
+    const count = (data) => {
+      let c = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i] < 250 || data[i+1] < 250 || data[i+2] < 250) c++;
+      }
+      return c;
+    };
+    // Card-level border must be the same regardless of rect's borderType.
+    expect(count(dataD)).toBe(count(dataS));
+  });
 });
 
 describe('createCardImageSource', () => {

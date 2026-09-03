@@ -119,6 +119,12 @@ function renderCardCanvas(cardSize, dpi, elements, border) {
   }
 
   // Optional card-level border (drawn last, on top of all content).
+  // Reset dash state — a previous rect with borderType='dashed'/'dotted'/
+  // 'dashDot' leaves setLineDash/lineCap/lineJoin set, which would otherwise
+  // bleed into this stroke. Card-level border is always solid.
+  ctx.setLineDash([]);
+  ctx.lineCap = 'butt';
+  ctx.lineJoin = 'miter';
   if (border && border.width > 0) {
     const bw = Math.max(0.5, border.width * mmToPx);
     ctx.strokeStyle = border.color || '#888888';
