@@ -141,7 +141,7 @@ arrangedSize(item, 'portrait' | 'landscape')
 - **必须 100% 覆盖的核心算法**：`js/layout-engine.js` 的 `calculateLayout`（`tests/layout-engine.test.js`，6 个用例）
 - **DOM-heavy 模块**：`js/card-editor.js` 用 jsdom + vi 跑，通过 fake factory 注入 `createCardCropper`，断言 `addEventListener` / 状态变化
 - **Canvas 绘制**：jsdom 不验证像素；用 mock ctx 检查 API 调用顺序与参数（如 `tests/card-editor.test.js` 的 `drawDragGuides` 用例）
-- **64 个测试 / 7 个文件**，全部 vitest + jsdom，`npm test` 一次跑完
+- **80 个测试 / 7 个文件**（持续增加），全部 vitest + jsdom，`npm test` 一次跑完
 
 新增纯函数时**先写测试再实现**（TDD）；修改已有算法时先跑测试看红。
 
@@ -173,6 +173,15 @@ test(card): cover element shape contract
 - `js/source-item.js` 接口稳定，向后兼容（新 SourceItem 子类只增不改）
 - 修改 `PhotoSourceItem` / `CardSourceItem` 构造参数前先读 spec §2-3
 - 卡片裁剪与证件照裁剪**不复用同一 Cropper.js 实例**，原因见 `2026-09-01-card-image-crop-design.md` §3.1
+- **Card-level border 永远实线**：spec `2026-09-03-rect-border-type-design.md` §2 明确决定边框类型只作用于 rect 元素；卡片外圈边框不受 `borderType` 影响。若未来要扩展到卡片边框，需先更新该 spec
+- 已落地的 spec 清单：
+  - `2026-08-28-photosheet-maker-design.md`（项目总纲）
+  - `2026-08-31-card-maker-design.md` + `card-maker-design-addendum.md`（卡片模式）
+  - `2026-09-01-card-image-crop-design.md`（卡片图片裁剪独立实例）
+  - `2026-09-01-card-drag-guides-design.md`（拖动十字辅助线）
+  - `2026-09-01-arrange-orientation-design.md`（设计 vs 排版方向）
+  - `2026-09-01-card-properties-slider-design.md`（属性面板 slider 化）
+  - `2026-09-03-rect-border-type-design.md`（矩形边框类型）
 
 ---
 
