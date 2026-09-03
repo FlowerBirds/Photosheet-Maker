@@ -82,3 +82,17 @@ export const CARD_FIELD_DEFAULTS = [
   { id: 'id',    label: '编号', enabled: true,  default: '',     size: 'small', color: DEFAULT_FIELD_COLOR },
   { id: 'note',  label: '备注', enabled: false, default: '',     size: 'small', color: DEFAULT_FIELD_COLOR },
 ];
+
+// Rect 元素边框类型枚举（key 与 BORDER_DASH_PATTERNS_MM 对应）。
+export const BORDER_TYPES = ['solid', 'dashed', 'dotted', 'dashDot'];
+
+// 各类型的虚线模式（mm 单位，渲染时按 mmToPx 缩放）。
+// null = 实线（不调 setLineDash）。
+// 取值针对 borderWidth ≈ 0.2mm 调过：dotted 用 [0.3, 0.5] + lineCap='round'
+// 才能在小笔画下渲染为圆点。
+export const BORDER_DASH_PATTERNS_MM = {
+  solid:   null,
+  dashed:  [1.5, 0.8],
+  dotted:  [0.3, 0.5],
+  dashDot: [1.5, 0.8, 0.3, 0.8],
+};
