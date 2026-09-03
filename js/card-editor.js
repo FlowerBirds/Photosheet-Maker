@@ -84,6 +84,7 @@ const DEFAULT_FONT_SIZE_MM = 5;  // mm — reasonable starting size for new text
    *   propBorderWidthVal:   HTMLElement,
    *   propBorderColor:      HTMLInputElement,
    *   propFillColor:        HTMLInputElement,
+   *   propBorderType:       HTMLSelectElement,
    *   propRectAspectToggle: HTMLButtonElement,
  *   // State callbacks
  *   getState:     () => ({ paperSize: string, dpi: number }),
@@ -218,6 +219,7 @@ export function initCardEditor(els) {
       borderWidth: 0.2,
       borderColor: '#888888',
       fillColor: '#ffffff',
+      borderType: 'solid',
       aspectLocked: true,
       _aspect: w / h,
     });
@@ -473,6 +475,14 @@ export function initCardEditor(els) {
       cur.fillColor = els.propFillColor.value || '#ffffff';
       drawDesigner();
     });
+    if (els.propBorderType) {
+      els.propBorderType.addEventListener('input', () => {
+        const cur = elements.find(e => e.id === selectedId);
+        if (!cur || cur.type !== 'rect') return;
+        cur.borderType = els.propBorderType.value || 'solid';
+        drawDesigner();
+      });
+    }
   }
   }
 
@@ -528,6 +538,9 @@ export function initCardEditor(els) {
       els.propBorderWidthVal.textContent = `${round1(el.borderWidth)} mm`;
       els.propBorderColor.value = el.borderColor || '#888888';
       els.propFillColor.value = el.fillColor || '#ffffff';
+      if (els.propBorderType) {
+        els.propBorderType.value = el.borderType || 'solid';
+      }
       if (els.propRectAspectToggle) {
         els.propRectAspectToggle.textContent = el.aspectLocked ? '🔗' : '🔓';
         els.propRectAspectToggle.title = el.aspectLocked
